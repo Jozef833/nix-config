@@ -37,11 +37,11 @@ in
 
     shellInit = ''
       git config --global init.defaultBranch "main"
-      git config --global user.name "Jozef833"
       git config --global user.email "172046463+Jozef833@users.noreply.github.com"
+      git config --global user.name "Jozef833"
       if ! pgrep -u $USER ssh-agent > /dev/null; then
         eval "$(ssh-agent -s)"
-        ssh-add ~/.ssh/id_ed25519
+        ssh-add /home/nixos/.ssh/id_ed25519
       fi
     '';
 
