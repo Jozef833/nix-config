@@ -31,6 +31,8 @@ in
   ];
 
   environment = {
+    localBinInPath = true; # For uv
+
     shellAliases = {
       vi = "vim";
     };
@@ -42,14 +44,23 @@ in
       if ! pgrep -u $USER ssh-agent > /dev/null; then
         eval "$(ssh-agent -s)"
         ssh-add /home/nixos/.ssh/id_ed25519
+        ssh-add /home/nixos/.ssh/id_rsa
       fi
     '';
 
     systemPackages = with pkgs; [
       git
+      nodejs_20
+      python312
       tree
+      uv
       vim
     ];
+
+    variables = {
+      NEXT_TELEMETRY_DISABLED = "1"; # For Next.js (https://nextjs.org/telemetry)
+      UV_PYTHON_DOWNLOADS = "never"; # For uv
+    };
   };
 
   networking.nameservers = [
