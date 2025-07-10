@@ -7,24 +7,6 @@
 
 { config, lib, pkgs, ... }:
 
-let
-  vim = pkgs.vim_configurable.customize {
-    vimrcConfig.customRC = ''
-      au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
-      colorscheme ron
-      set autoindent
-      set expandtab
-      set mouse=a
-      set number
-      set relativenumber
-      set shiftwidth=4
-      set smartindent
-      set smarttab
-      set tabstop=4
-      syntax on
-    '';
-  };
-in
 {
   imports = [
     <nixos-wsl/modules>
@@ -32,10 +14,6 @@ in
 
   environment = {
     localBinInPath = true; # For uv
-
-    shellAliases = {
-      vi = "vim";
-    };
 
     shellInit = ''
       git config --global init.defaultBranch "main"
@@ -54,7 +32,6 @@ in
       python312
       tree
       uv
-      vim
     ];
 
     variables = {
@@ -67,9 +44,28 @@ in
     "1.1.1.1"
   ];
 
-  programs.vim = {
-    defaultEditor = true;
-    enable = true;
+  programs = {
+    neovim = {
+      configure = {
+        customRC = ''
+          au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
+          set autoindent
+          set expandtab
+          set mouse=a
+          set number
+          set relativenumber
+          set shiftwidth=2
+          set smartindent
+          set smarttab
+          set tabstop=2
+          syntax on
+        '';
+      };
+      defaultEditor = true;
+      enable = true;
+      viAlias = true;
+      vimAlias = true;
+    };
   };
 
   # This value determines the NixOS release from which the default
