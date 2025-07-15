@@ -1,6 +1,5 @@
 {
   config,
-  hostname,
   pkgs,
   stateVersion,
   system,
@@ -21,9 +20,7 @@
     '';
 
     homeDirectory = "/home/${username}";
-
     stateVersion = stateVersion;
-
     username = username;
   };
 }
