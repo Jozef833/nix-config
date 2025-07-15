@@ -18,7 +18,7 @@
 
 {
   imports = [
-    <nixos-wsl/modules>
+    #<nixos-wsl/modules>
   ];
 
   environment = {
