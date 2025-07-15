@@ -5,7 +5,16 @@
 # NixOS-WSL specific options are documented on the NixOS-WSL repository:
 # https://github.com/nix-community/NixOS-WSL
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  hostname,
+  lib,
+  pkgs,
+  stateVersion,
+  system,
+  username,
+  ...
+}:
 
 {
   imports = [
@@ -21,17 +30,24 @@
       git config --global user.name "Jozef833"
       if ! pgrep -u $USER ssh-agent > /dev/null; then
         eval "$(ssh-agent -s)"
-        ssh-add /home/nixos/.ssh/id_ed25519
-        ssh-add /home/nixos/.ssh/id_rsa
+        ssh-add /home/${username}/.ssh/id_ed25519
+        ssh-add /home/${username}/.ssh/id_rsa
       fi
     '';
 
     systemPackages = with pkgs; [
+      alacritty
+      iamb
       git
       nodejs_20
       python312
       tree
       uv
+
+      (pkgs.writeShellScriptBin "python" ''
+        export LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH
+        exec ${pkgs.python312}/bin/python "$@"
+      '')
     ];
 
     variables = {
@@ -42,6 +58,11 @@
 
   networking.nameservers = [
     "1.1.1.1"
+  ];
+
+  nix.settings.experimental-features = [
+    "flakes"
+    "nix-command"
   ];
 
   programs = {
@@ -66,6 +87,13 @@
       viAlias = true;
       vimAlias = true;
     };
+
+    nix-ld = {
+      enable = true;
+      libraries = with pkgs; [
+        zlib zstd stdenv.cc.cc curl openssl attr libssh bzip2 libxml2 acl libsodium util-linux xz systemd
+      ];
+    };
   };
 
   # This value determines the NixOS release from which the default
@@ -74,10 +102,10 @@
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "24.11"; # Did you read the comment?
+  system.stateVersion = stateVersion; # Did you read the comment?
 
   wsl = {
-    defaultUser = "nixos";
+    defaultUser = username;
     enable = true;
     wslConf.network.generateResolvConf = false;
   };
