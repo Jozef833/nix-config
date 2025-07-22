@@ -28,10 +28,10 @@
       tree
       uv
 
-      #(pkgs.writeShellScriptBin "python" ''
-      #  export LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH
-      #  exec ${pkgs.python312}/bin/python "$@"
-      #'')
+      (pkgs.writeShellScriptBin "python" ''
+        export LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH
+        exec ${pkgs.python312}/bin/python "$@"
+      '')
     ];
 
     variables = {
