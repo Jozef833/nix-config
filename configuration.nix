@@ -81,4 +81,3 @@
     wslConf.network.generateResolvConf = false;
   };
 }
-
