@@ -74,6 +74,6 @@
   wsl = {
     enable = true;
     defaultUser = username;
-    #wslConf.network.generateResolvConf = false;
+    wslConf.network.generateResolvConf = false;
   };
 }
