@@ -4,7 +4,6 @@
   lib,
   pkgs,
   stateVersion,
-  system,
   username,
   ...
 }:
@@ -27,11 +26,6 @@
       python312
       tree
       uv
-
-      #(pkgs.writeShellScriptBin "python" ''
-      #  export LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH
-      #  exec ${pkgs.python312}/bin/python "$@"
-      #'')
     ];
 
     variables = {
@@ -51,31 +45,9 @@
     ];
   };
 
-  nixpkgs.config.allowUnfree = true;
+  nixpkgs.config.allowUnfree = false;
 
   programs = {
-    neovim = {
-      enable = true;
-      configure = {
-        customRC = ''
-          au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
-          set autoindent
-          set expandtab
-          set mouse=a
-          set number
-          set relativenumber
-          set shiftwidth=2
-          set smartindent
-          set smarttab
-          set tabstop=2
-          syntax on
-        '';
-      };
-      defaultEditor = true;
-      viAlias = true;
-      vimAlias = true;
-    };
-
     nix-ld = {
       enable = true;
       libraries = with pkgs; [
@@ -102,6 +74,6 @@
   wsl = {
     enable = true;
     defaultUser = username;
-    wslConf.network.generateResolvConf = false;
+    #wslConf.network.generateResolvConf = false;
   };
 }

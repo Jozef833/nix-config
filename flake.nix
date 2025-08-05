@@ -2,13 +2,13 @@
   inputs = {
     home-manager = {
       inputs.nixpkgs.follows = "nixpkgs";
-      url = "github:nix-community/home-manager/release-24.11";
+      url = "github:nix-community/home-manager/release-25.05";
     };
     nixos-wsl = {
       inputs.nixpkgs.follows = "nixpkgs";
-      url = "github:nix-community/NixOS-WSL/release-24.11";
+      url = "github:nix-community/NixOS-WSL/release-25.05";
     };
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
   };
 
   outputs = {
@@ -26,7 +26,7 @@
     # this value at the release version of the first install of this system.
     # Before changing this value read the documentation for this option
     # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-    stateVersion = "24.11"; # Did you read the comment?
+    stateVersion = "25.05"; # Did you read the comment?
     system = "x86_64-linux";
     username = "nixos";
   in {
@@ -40,7 +40,7 @@
         {
           home-manager = {
             extraSpecialArgs = {
-              inherit stateVersion system username;
+              inherit stateVersion;
             };
             useGlobalPkgs = true;
             useUserPackages = true;
@@ -50,7 +50,7 @@
       ];
 
       specialArgs = {
-        inherit hostname stateVersion system username;
+        inherit hostname stateVersion username;
       };
 
       system = system;
