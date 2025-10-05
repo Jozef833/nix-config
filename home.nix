@@ -7,16 +7,6 @@
 
 {
   home = {
-    file.".config/iamb/config.toml".text = ''
-      default_profile = "octoclonius"
-
-      [profiles.octoclonius]
-      user_id = "@octoclonius:matrix.org"
-
-      [settings]
-      image_preview = {}
-    '';
-
     stateVersion = stateVersion;
   };
 
@@ -47,9 +37,8 @@
       extraConfig = {
         init.defaultBranch = "main";
       };
-      lfs.enable = true;
-      userEmail = "Jozef.Porubcin@onmilliman.com";
-      userName = "Jozef Porubcin";
+      userEmail = "172046463+Jozef833@users.noreply.github.com";
+      userName = "Jozef833";
     };
   };
 }
