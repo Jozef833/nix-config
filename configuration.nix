@@ -7,10 +7,10 @@
 
 {
   environment.systemPackages = with pkgs; [
-    coreutils
+    /*coreutils
     shadow
     gnupg
-    bash
+    bash*/
   ];
 
   nix.settings = {
