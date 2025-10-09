@@ -14,16 +14,22 @@
     packages = with pkgs; [
       eza
     ];
+    shellAliases = {
+      ls = "eza";
+    };
     inherit (osConfig.system) stateVersion;
   };
 
   programs = {
+    bash = {
+      enable = true;
+    };
+
     git = {
       enable = true;
       extraConfig = {
         init.defaultBranch = "main";
       };
-      signing.signByDefault = true;
       userEmail = "Jozef.Porubcin@onmilliman.com";
       userName = "Jozef Porubcin";
     };
