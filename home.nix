@@ -51,10 +51,7 @@
           shiftwidth = 0;
           tabstop = 2;
         };
-        statusline.lualine = {
-          enable = true;
-          #icons.enable = false;
-        };
+        statusline.lualine.enable = true;
         syntaxHighlighting = true;
         telescope.enable = true;
         treesitter = {
