@@ -30,8 +30,8 @@
       extraConfig = {
         init.defaultBranch = "main";
       };
-      userEmail = "Jozef.Porubcin@onmilliman.com";
-      userName = "Jozef Porubcin";
+      userEmail = "172046463+Jozef833@users.noreply.github.com";
+      userName = "Jozef833";
     };
 
     nvf = {
