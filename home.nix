@@ -14,10 +14,24 @@
     packages = with pkgs; [
       eza
     ];
+    shellAliases = {
+      lg = "lazygit";
+      ls = "eza";
+    };
     inherit (osConfig.system) stateVersion;
   };
 
   programs = {
+    git = {
+      enable = true;
+      extraConfig = {
+        init.defaultBranch = "main";
+      };
+      signing.signByDefault = true;
+      userEmail = "Jozef.Porubcin@onmilliman.com";
+      userName = "Jozef Porubcin";
+    };
+
     nvf = {
       enable = true;
       defaultEditor = true;
@@ -65,15 +79,6 @@
           rainbow-delimiters.enable = true;
         };
       };
-    };
-
-    git = {
-      enable = true;
-      extraConfig = {
-        init.defaultBranch = "main";
-      };
-      userEmail = "Jozef.Porubcin@onmilliman.com";
-      userName = "Jozef Porubcin";
     };
   };
 }
