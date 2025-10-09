@@ -16,6 +16,7 @@
     ];
     shellAliases = {
       ls = "eza";
+      tree = "eza -T";
     };
     inherit (osConfig.system) stateVersion;
   };
