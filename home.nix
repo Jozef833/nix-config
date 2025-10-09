@@ -14,10 +14,6 @@
     packages = with pkgs; [
       eza
     ];
-    shellAliases = {
-      lg = "lazygit";
-      ls = "eza";
-    };
     inherit (osConfig.system) stateVersion;
   };
 
