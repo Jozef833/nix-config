@@ -1,7 +1,8 @@
 {
+  config,
   inputs,
+  osConfig,
   pkgs,
-  stateVersion,
   ...
 }:
 
@@ -14,7 +15,7 @@
     packages = with pkgs; [
       eza
     ];
-    inherit stateVersion;
+    inherit (osConfig.system) stateVersion;
   };
 
   programs = {

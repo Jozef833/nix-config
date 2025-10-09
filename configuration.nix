@@ -1,7 +1,4 @@
 {
-  config,
-  hostname,
-  lib,
   pkgs,
   stateVersion,
   username,
@@ -24,6 +21,12 @@
   };
 
   nixpkgs.config.allowUnfree = false;
+
+  programs = {
+    ssh = {
+      startAgent = true;
+    };
+  };
 
   security.pki.certificateFiles = [
     ./ZscalerRootCertificate-2048-SHA256-Feb2025.crt

@@ -46,7 +46,7 @@
         {
           home-manager = {
             extraSpecialArgs = {
-              inherit inputs stateVersion;
+              inherit inputs;
             };
             useGlobalPkgs = true;
             useUserPackages = true;
