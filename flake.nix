@@ -11,15 +11,19 @@
     nixpkgs = {
       url = "github:NixOS/nixpkgs/nixos-25.05";
     };
+    nvf = {
+      url = "github:NotAShelf/nvf/dde524f7cc4b9e56cf45223a23e1b598f68848d7";
+    };
   };
 
   outputs = {
     self,
-    nixos-wsl,
     nixpkgs,
     home-manager,
+    nvf,
+    nixos-wsl,
     ...
-  }:
+  } @ inputs:
   let
     hostname = "nixos";
     # This value determines the NixOS release from which the default
@@ -42,7 +46,7 @@
         {
           home-manager = {
             extraSpecialArgs = {
-              inherit stateVersion;
+              inherit inputs stateVersion;
             };
             useGlobalPkgs = true;
             useUserPackages = true;
@@ -52,7 +56,7 @@
       ];
 
       specialArgs = {
-        inherit hostname stateVersion username;
+        inherit hostname inputs stateVersion username;
       };
 
       system = system;

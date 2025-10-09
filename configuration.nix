@@ -9,6 +9,13 @@
 }:
 
 {
+  environment.systemPackages = with pkgs; [
+    coreutils
+    shadow
+    gnupg
+    bash
+  ];
+
   nix.settings = {
     experimental-features = [
       "flakes"
@@ -24,8 +31,18 @@
 
   system.stateVersion = stateVersion;
 
+  virtualisation = {
+    docker = {
+      enable = true;
+      enableOnBoot = true;
+    };
+  };
+
   wsl = {
     enable = true;
     defaultUser = username;
+    docker-desktop = {
+      enable = true;
+    };
   };
 }

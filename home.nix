@@ -1,35 +1,73 @@
 {
-  config,
+  inputs,
   pkgs,
   stateVersion,
   ...
 }:
 
 {
+  imports = [
+    inputs.nvf.homeManagerModules.default
+  ];
+
   home = {
-    stateVersion = stateVersion;
+    packages = with pkgs; [
+      eza
+    ];
+    inherit stateVersion;
   };
 
   programs = {
-    neovim = {
+    nvf = {
       enable = true;
-      extraConfig = ''
-        au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
-        set autoindent
-        set expandtab
-        set mouse=a
-	set mousescroll=ver:1
-        set number
-        set relativenumber
-        set shiftwidth=2
-        set smartindent
-        set smarttab
-        set tabstop=2
-        syntax on
-      '';
       defaultEditor = true;
-      viAlias = true;
-      vimAlias = true;
+      enableManpages = true;
+      settings.vim = {
+        autopairs.nvim-autopairs.enable = true;
+        languages = {
+          enableExtraDiagnostics = true;
+          enableTreesitter = true;
+          csharp.enable = true;
+          css.enable = true;
+          html.enable = true;
+          lua.enable = true;
+          markdown.enable = true;
+          nix.enable = true;
+          python.enable = true;
+          rust.enable = true;
+          sql.enable = true;
+          ts.enable = true;
+          yaml.enable = true;
+        };
+        lineNumberMode = "relative";
+        lsp.enable = true;
+        luaConfigRC = {
+          default = ''
+            vim.opt.expandtab = true
+            vim.opt.mousescroll = "ver:1"
+          '';
+        };
+        options = {
+          shiftwidth = 0;
+          tabstop = 2;
+        };
+        statusline.lualine = {
+          enable = true;
+          #icons.enable = false;
+        };
+        syntaxHighlighting = true;
+        telescope.enable = true;
+        treesitter = {
+          enable = true;
+          autotagHtml = true;
+        };
+        viAlias = true;
+        vimAlias = true;
+        visuals = {
+          nvim-web-devicons.enable = true;
+          rainbow-delimiters.enable = true;
+        };
+      };
     };
 
     git = {
