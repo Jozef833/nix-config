@@ -1,5 +1,4 @@
 {
-  config,
   inputs,
   osConfig,
   pkgs,
@@ -73,8 +72,8 @@
       extraConfig = {
         init.defaultBranch = "main";
       };
-      userEmail = "172046463+Jozef833@users.noreply.github.com";
-      userName = "Jozef833";
+      userEmail = "Jozef.Porubcin@onmilliman.com";
+      userName = "Jozef Porubcin";
     };
   };
 }

@@ -23,6 +23,10 @@
   nixpkgs.config.allowUnfree = false;
 
   programs = {
+    gnupg = {
+      agent.enable = true;
+    };
+
     ssh = {
       startAgent = true;
     };
