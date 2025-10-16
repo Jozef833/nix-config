@@ -15,6 +15,7 @@
       eza
     ];
     shellAliases = {
+      lg = "lazygit";
       ls = "eza";
       tree = "eza -T";
     };
@@ -33,6 +34,23 @@
       };
       userEmail = "172046463+Jozef833@users.noreply.github.com";
       userName = "Jozef833";
+    };
+
+    lazygit = {
+      enable = true;
+      settings = {
+        disableStartupPopups = true;
+        gui = {
+          animateExplosion = false;
+          nerdFontsVersion = "3";
+          scrollHeight = 1;
+          showRandomTip = false;
+          statusPanelView = "allBranchesLog";
+        };
+        update = {
+          method = "never";
+        };
+      };
     };
 
     nvf = {
