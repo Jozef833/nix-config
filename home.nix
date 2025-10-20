@@ -13,6 +13,7 @@
   home = {
     packages = with pkgs; [
       eza
+      git-credential-manager
     ];
     shellAliases = {
       lg = "lazygit";
@@ -27,13 +28,32 @@
       enable = true;
     };
 
+    gh = {
+      enable = true;
+      gitCredentialHelper.enable = true;
+      settings = {
+        git_protocol = "https";
+      };
+    };
+
+    gh-dash = {
+      enable = true;
+    };
+
     git = {
       enable = true;
       extraConfig = {
+        credential.credentialStore = "gpg";
+        credential.helper = "manager";
         init.defaultBranch = "main";
       };
+      signing.signByDefault = true;
       userEmail = "172046463+Jozef833@users.noreply.github.com";
       userName = "Jozef833";
+    };
+
+    gpg = {
+      enable = true;
     };
 
     lazygit = {
@@ -100,6 +120,24 @@
           rainbow-delimiters.enable = true;
         };
       };
+    };
+
+    password-store = {
+      enable = true;
+    };
+  };
+
+  services = {
+    gpg-agent = {
+      enable = true;
+      enableSshSupport = true;
+      pinentry = {
+        package = pkgs.pinentry-curses;
+      };
+    };
+
+    pass-secret-service = {
+      enable = true;
     };
   };
 }
