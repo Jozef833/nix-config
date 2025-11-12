@@ -6,24 +6,40 @@
 }:
 
 {
-  nix.settings = {
-    experimental-features = [
-      "flakes"
-      "nix-command"
-    ];
+  nix = {
+    settings = {
+      experimental-features = [
+        "flakes"
+        "nix-command"
+      ];
+    };
   };
 
-  nixpkgs.config.allowUnfree = false;
+  nixpkgs = {
+    config = {
+      allowUnfree = false;
+    };
+  };
 
-  security.pki.certificateFiles = [
-    ./ZscalerRootCertificate-2048-SHA256-Feb2025.crt
-  ];
+  security = {
+    pki = {
+      certificateFiles = [
+        ./ZscalerRootCertificate-2048-SHA256-Feb2025.crt
+      ];
+    };
+  };
 
-  system.stateVersion = stateVersion;
+  system = {
+    stateVersion = stateVersion;
+  };
 
-  users.users.${username} = {
-    shell = pkgs.bash;
-    useDefaultShell = true;
+  users = {
+    users = {
+      ${username} = {
+        shell = pkgs.bash;
+        useDefaultShell = true;
+      };
+    };
   };
 
   virtualisation = {

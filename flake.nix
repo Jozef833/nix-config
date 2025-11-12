@@ -1,11 +1,19 @@
 {
   inputs = {
     home-manager = {
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs = {
+        nixpkgs = {
+          follows = "nixpkgs";
+        };
+      };
       url = "github:nix-community/home-manager/release-25.05";
     };
     nixos-wsl = {
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs = {
+        nixpkgs = {
+          follows = "nixpkgs";
+        };
+      };
       url = "github:nix-community/NixOS-WSL/release-25.05";
     };
     nixpkgs = {
@@ -16,14 +24,14 @@
     };
   };
 
-  outputs = {
+  outputs = inputs @ {
     self,
     nixpkgs,
     home-manager,
     nvf,
     nixos-wsl,
     ...
-  } @ inputs:
+  }:
   let
     hostname = "nixos";
     # This value determines the NixOS release from which the default
@@ -50,7 +58,9 @@
             };
             useGlobalPkgs = true;
             useUserPackages = true;
-            users.${username} = ./home.nix;
+            users = {
+              ${username} = ./home.nix;
+            };
           };
         }
       ];
