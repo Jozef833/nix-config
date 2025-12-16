@@ -28,6 +28,13 @@
       enable = true;
     };
 
+    direnv = {
+      enable = true;
+      nix-direnv = {
+        enable = true;
+      };
+    };
+
     gh = {
       enable = true;
       gitCredentialHelper = {
@@ -44,7 +51,7 @@
 
     git = {
       enable = true;
-      extraConfig = {
+      settings = {
         credential = {
           credentialStore = "gpg";
           helper = "manager";
@@ -53,12 +60,14 @@
         init = {
           defaultBranch = "main";
         };
+        user = {
+          email = "172046463+Jozef833@users.noreply.github.com";
+          name = "Jozef833";
+        };
       };
       signing = {
         signByDefault = true;
       };
-      userEmail = "172046463+Jozef833@users.noreply.github.com";
-      userName = "Jozef833";
     };
 
     gpg = {

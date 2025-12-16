@@ -6,7 +6,7 @@
           follows = "nixpkgs";
         };
       };
-      url = "github:nix-community/home-manager/release-25.05";
+      url = "github:nix-community/home-manager/release-25.11";
     };
     nixos-wsl = {
       inputs = {
@@ -14,13 +14,13 @@
           follows = "nixpkgs";
         };
       };
-      url = "github:nix-community/NixOS-WSL/release-25.05";
+      url = "github:nix-community/NixOS-WSL/release-25.11";
     };
     nixpkgs = {
-      url = "github:NixOS/nixpkgs/nixos-25.05";
+      url = "github:NixOS/nixpkgs/nixos-25.11";
     };
     nvf = {
-      url = "github:NotAShelf/nvf/dde524f7cc4b9e56cf45223a23e1b598f68848d7";
+      url = "github:NotAShelf/nvf";
     };
   };
 

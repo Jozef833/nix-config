@@ -6,6 +6,12 @@
 }:
 
 {
+  environment = {
+    systemPackages = with pkgs; [
+      wget
+    ];
+  };
+
   nix = {
     settings = {
       experimental-features = [
@@ -18,6 +24,13 @@
   nixpkgs = {
     config = {
       allowUnfree = false;
+    };
+  };
+
+  programs = {
+    # Used for VS Code WSL (along with wget package): https://nix-community.github.io/NixOS-WSL/how-to/vscode.html
+    nix-ld = {
+      enable = true;
     };
   };
 
