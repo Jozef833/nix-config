@@ -38,7 +38,7 @@
     gh = {
       enable = true;
       gitCredentialHelper = {
-        enable = true;
+        enable = false;
       };
       settings = {
         git_protocol = "https";
@@ -178,6 +178,10 @@
           };
         };
       };
+    };
+
+    opencode = {
+      enable = true;
     };
 
     password-store = {
