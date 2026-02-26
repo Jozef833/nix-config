@@ -15,6 +15,7 @@
       eza
       git-credential-manager
       ripgrep
+      wl-clipboard
     ];
     shellAliases = {
       lg = "lazygit";
@@ -88,6 +89,10 @@
       enable = true;
     };
 
+    kitty = {
+      enable = true;
+    };
+
     lazygit = {
       enable = true;
       settings = {
@@ -109,7 +114,7 @@
       enable = true;
       servers = {
         github = {
-          url = "https://api.githubcopilot.com/mcp/";
+          url = "https://api.githubcopilot.com/mcp/insiders";
         };
         playwright = {
           command = "${pkgs.playwright-mcp}/bin/mcp-server-playwright";
@@ -227,6 +232,13 @@
 
     pass-secret-service = {
       enable = true;
+    };
+  };
+
+  wayland.windowManager.hyprland = {
+    enable = true;
+    settings = {
+      "$mod" = "ALT";
     };
   };
 }

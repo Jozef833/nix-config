@@ -13,6 +13,12 @@
     ];
   };
 
+  hardware = {
+    graphics = {
+      enable = true;
+    };
+  };
+
   nix = {
     settings = {
       experimental-features = [
@@ -32,6 +38,9 @@
   };
 
   programs = {
+    hyprland = {
+      enable = true;
+    };
     # Used for VS Code WSL (along with wget package): https://nix-community.github.io/NixOS-WSL/how-to/vscode.html
     nix-ld = {
       enable = true;
