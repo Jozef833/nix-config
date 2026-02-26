@@ -14,6 +14,7 @@
     packages = with pkgs; [
       eza
       git-credential-manager
+      ripgrep
     ];
     shellAliases = {
       lg = "lazygit";
@@ -26,6 +27,19 @@
   programs = {
     bash = {
       enable = true;
+    };
+
+    claude-code = {
+      enable = true;
+      enableMcpIntegration = true;
+      settings = {
+        defaultMode = "acceptEdits";
+        env = {
+          CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = 1;
+        };
+        includeCoAuthoredBy = false;
+        theme = "dark-ansi";
+      };
     };
 
     direnv = {
@@ -87,6 +101,18 @@
         };
         update = {
           method = "never";
+        };
+      };
+    };
+
+    mcp = {
+      enable = true;
+      servers = {
+        github = {
+          url = "https://api.githubcopilot.com/mcp/";
+        };
+        playwright = {
+          command = "${pkgs.playwright-mcp}/bin/mcp-server-playwright";
         };
       };
     };
@@ -182,6 +208,7 @@
 
     opencode = {
       enable = true;
+      enableMcpIntegration = true;
     };
 
     password-store = {

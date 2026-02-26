@@ -1,4 +1,5 @@
 {
+  lib,
   pkgs,
   stateVersion,
   username,
@@ -24,6 +25,9 @@
   nixpkgs = {
     config = {
       allowUnfree = false;
+      allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+        "claude-code"
+      ];
     };
   };
 
