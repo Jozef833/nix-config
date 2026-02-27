@@ -48,6 +48,20 @@
       modules = [
         nixos-wsl.nixosModules.default
 
+        # Overlays: patch aquamarine + hyprland for WSLg compatibility
+        {
+          nixpkgs.overlays = [
+            (final: prev: {
+              aquamarine = prev.aquamarine.overrideAttrs (old: {
+                patches = (old.patches or []) ++ [ ./patches/aquamarine-wsl-shm.patch ];
+              });
+              hyprland = prev.hyprland.overrideAttrs (old: {
+                patches = (old.patches or []) ++ [ ./patches/hyprland-wsl-renderbuffer.patch ];
+              });
+            })
+          ];
+        }
+
         ./configuration.nix
 
         home-manager.nixosModules.home-manager

@@ -1,0 +1,583 @@
+diff -ruN --no-dereference a/include/aquamarine/backend/Wayland.hpp b/include/aquamarine/backend/Wayland.hpp
+--- a/include/aquamarine/backend/Wayland.hpp	1970-01-01 00:00:01.000000000 +0000
++++ b/include/aquamarine/backend/Wayland.hpp	2026-02-27 18:21:10.752062488 +0000
+@@ -25,6 +25,10 @@
+         ~CWaylandBuffer();
+         bool good();
+ 
++        // Copy rendered pixel data from the source buffer into the SHM pool.
++        // Must be called before wl_surface.attach when in SHM mode.
++        bool updateSHM();
++
+         bool pendingRelease = false;
+ 
+       private:
+@@ -35,6 +39,16 @@
+         Hyprutils::Memory::CWeakPointer<IBuffer>         buffer;
+         Hyprutils::Memory::CWeakPointer<CWaylandBackend> backend;
+ 
++        // SHM fallback state: persistent mapping for pixel data updates
++        struct {
++            void*    data   = nullptr;  // mmap'd pool data
++            size_t   size   = 0;        // pool size in bytes
++            int      fd     = -1;       // shm fd (kept open for lifetime)
++            int      width  = 0;
++            int      height = 0;
++            int      stride = 0;
++        } shmState;
++
+         friend class CWaylandOutput;
+     };
+ 
+@@ -68,6 +82,7 @@
+         bool frameScheduledWhileWaiting = false;
+         bool readyForFrameCallback      = false; // true after attaching a buffer
+         bool frameScheduled             = false;
++        bool initialConfigureDone       = false; // xdg_surface must be configured before buffer commits
+ 
+         struct {
+             std::vector<std::pair<Hyprutils::Memory::CWeakPointer<IBuffer>, Hyprutils::Memory::CSharedPointer<CWaylandBuffer>>> buffers;
+@@ -141,6 +156,9 @@
+         Hyprutils::Memory::CWeakPointer<CWaylandBackend>                   self;
+         virtual int                                                        drmRenderNodeFD();
+ 
++        // Wake the event loop so pending idle callbacks get dispatched.
++        void nudge();
++
+       private:
+         CWaylandBackend(Hyprutils::Memory::CSharedPointer<CBackend> backend);
+ 
+@@ -165,6 +183,9 @@
+         // dmabuf formats
+         std::vector<SDRMFormat> dmabufFormats;
+ 
++        // Whether we are in SHM fallback mode (no linux-dmabuf-v1)
++        bool                   useSHM = false;
++
+         struct {
+             wl_display* display = nullptr;
+ 
+@@ -186,6 +207,9 @@
+             std::string nodeName = "";
+         } drmState;
+ 
++        // eventfd used to wake the event loop when idle callbacks are pending
++        int nudgeFd = -1;
++
+         friend class CBackend;
+         friend class CWaylandKeyboard;
+         friend class CWaylandPointer;
+diff -ruN --no-dereference a/src/allocator/DRMDumb.cpp b/src/allocator/DRMDumb.cpp
+--- a/src/allocator/DRMDumb.cpp	1970-01-01 00:00:01.000000000 +0000
++++ b/src/allocator/DRMDumb.cpp	2026-02-27 18:32:24.194996992 +0000
+@@ -21,6 +21,13 @@
+                                            Hyprutils::Memory::CSharedPointer<CSwapchain> swapchain) : allocator(allocator_) {
+     attrs.format = params.format;
+ 
++    // DRM dumb buffers are always 32bpp; if no format was specified, assume
++    // ARGB8888 which is the standard 32bpp format.  Without this, callers
++    // (e.g. cursor swapchain) that leave the format as DRM_FORMAT_INVALID
++    // cause EGL DMABUF imports to fail with "unknown drm fourcc format".
++    if (attrs.format == DRM_FORMAT_INVALID)
++        attrs.format = DRM_FORMAT_ARGB8888;
++
+     if (int ret = drmModeCreateDumbBuffer(allocator->drmFD(), params.size.x, params.size.y, 32, 0, &handle, &stride, &bufferLen); ret < 0) {
+         allocator->backend->log(AQ_LOG_ERROR, std::format("failed to create a drm_dumb buffer: {}", strerror(-ret)));
+         return;
+@@ -116,15 +123,19 @@
+         return nullptr;
+     }
+ 
++    // Check capability first; if the query fails (some drivers like vgem
++    // don't report it), try a real 1x1 allocation as a probe.
+     uint64_t hasDumb = 0;
+-    if (drmGetCap(drmfd_, DRM_CAP_DUMB_BUFFER, &hasDumb) < 0) {
+-        backend_->log(AQ_LOG_ERROR, "DRM Dumb: Failed to query hasDumb");
+-        return nullptr;
+-    }
+-
+-    if (!hasDumb) {
+-        backend_->log(AQ_LOG_ERROR, "DRM Dumb: hasDumb is false, gpu driver doesn't support dumb buffers!");
+-        return nullptr;
++    if (drmGetCap(drmfd_, DRM_CAP_DUMB_BUFFER, &hasDumb) < 0 || !hasDumb) {
++        backend_->log(AQ_LOG_DEBUG, "DRM Dumb: cap query inconclusive, probing with a test allocation");
++        struct drm_mode_create_dumb probe = {.height = 1, .width = 1, .bpp = 32};
++        if (drmIoctl(drmfd_, DRM_IOCTL_MODE_CREATE_DUMB, &probe) < 0) {
++            backend_->log(AQ_LOG_ERROR, "DRM Dumb: probe allocation failed, device does not support dumb buffers");
++            return nullptr;
++        }
++        struct drm_mode_destroy_dumb destroy = {.handle = probe.handle};
++        drmIoctl(drmfd_, DRM_IOCTL_MODE_DESTROY_DUMB, &destroy);
++        backend_->log(AQ_LOG_DEBUG, "DRM Dumb: probe allocation succeeded");
+     }
+ 
+     auto a  = SP<CDRMDumbAllocator>(new CDRMDumbAllocator(drmfd_, backend_));
+diff -ruN --no-dereference a/src/backend/Backend.cpp b/src/backend/Backend.cpp
+--- a/src/backend/Backend.cpp	1970-01-01 00:00:01.000000000 +0000
++++ b/src/backend/Backend.cpp	2026-02-27 17:18:23.451329310 +0000
+@@ -4,6 +4,7 @@
+ #include <aquamarine/backend/DRM.hpp>
+ #include <aquamarine/backend/Null.hpp>
+ #include <aquamarine/allocator/GBM.hpp>
++#include <aquamarine/allocator/DRMDumb.hpp>
+ #include <ranges>
+ #include <sys/timerfd.h>
+ #include <ctime>
+@@ -153,6 +154,41 @@
+     // TODO: obviously change this when (if) we add different allocators.
+     for (auto const& b : implementations) {
+         if (b->drmFD() >= 0) {
++            // When the Wayland backend is in SHM mode (no linux-dmabuf-v1,
++            // e.g. WSLg), GBM buffer allocation fails on vgem because vgem
++            // has no real rendering capability.  Use DRM dumb buffers instead:
++            // they are CPU-accessible AND export DMABUFs that can be imported
++            // as EGL images for GPU rendering.  The DRM dumb allocator needs
++            // a primary node (/dev/dri/card0), not a render node.
++            if (b->type() == AQ_BACKEND_WAYLAND) {
++                auto* wlBackend = dynamic_cast<CWaylandBackend*>(b.get());
++                if (wlBackend && wlBackend->useSHM) {
++                    // Open the DRM primary node directly for dumb buffer
++                    // allocation.  reopenDRMNode() returns the render node
++                    // (which doesn't support dumb buffers on vgem), so we
++                    // resolve the primary node path from the render node fd
++                    // and open it ourselves.
++                    char* primaryName = drmGetPrimaryDeviceNameFromFd(b->drmFD());
++                    if (!primaryName)
++                        primaryName = drmGetDeviceNameFromFd2(b->drmFD());
++                    if (!primaryName) {
++                        log(AQ_LOG_ERROR, "SHM mode: cannot resolve primary DRM node path");
++                        // fall through to GBM path below
++                    } else {
++                        int fd = open(primaryName, O_RDWR | O_CLOEXEC);
++                        log(AQ_LOG_DEBUG, std::format("SHM mode: opened primary node {} fd={}", primaryName, fd));
++                        free(primaryName);
++                        if (fd >= 0) {
++                            primaryAllocator = CDRMDumbAllocator::create(fd, self);
++                            if (primaryAllocator)
++                                break;
++                            log(AQ_LOG_WARNING, "DRM dumb allocator failed on primary node, falling back to GBM");
++                            close(fd);
++                        }
++                    }
++                }
++            }
++
+             auto fd = reopenDRMNode(b->drmFD());
+             if (fd < 0) {
+                 // this is critical, we cannot create an allocator properly
+diff -ruN --no-dereference a/src/backend/Wayland.cpp b/src/backend/Wayland.cpp
+--- a/src/backend/Wayland.cpp	1970-01-01 00:00:01.000000000 +0000
++++ b/src/backend/Wayland.cpp	2026-02-27 19:30:10.520551808 +0000
+@@ -10,6 +10,7 @@
+ #include <fcntl.h>
+ #include <sys/mman.h>
+ #include <unistd.h>
++#include <sys/eventfd.h>
+ 
+ using namespace Aquamarine;
+ using namespace Hyprutils::Memory;
+@@ -60,9 +61,24 @@
+     return (wl_shm_format)drmFormat;
+ }
+ 
++// Minimal wl_callback listener used to tickle the wayland fd.
++static void syncDone(void* data, struct wl_callback* cb, uint32_t serial) {
++    wl_callback_destroy(cb);
++}
++static const struct wl_callback_listener kSyncListener = {.done = syncDone};
++
+ Aquamarine::CWaylandBackend::~CWaylandBackend() {
+     if (drmState.fd >= 0)
+         close(drmState.fd);
++    if (nudgeFd >= 0)
++        close(nudgeFd);
++}
++
++void Aquamarine::CWaylandBackend::nudge() {
++    if (nudgeFd >= 0) {
++        uint64_t val = 1;
++        write(nudgeFd, &val, sizeof(val));
++    }
+ }
+ 
+ eBackendType Aquamarine::CWaylandBackend::type() {
+@@ -83,6 +99,13 @@
+         return false;
+     }
+ 
++    // Create an eventfd used to wake the event loop when idle callbacks need
++    // processing.  Without this, the wayland fd may be idle after the initial
++    // configure exchange and pending idle callbacks never fire.
++    nudgeFd = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
++    if (nudgeFd < 0)
++        backend->log(AQ_LOG_WARNING, "Wayland backend: failed to create nudge eventfd");
++
+     auto XDGCURRENTDESKTOP = getenv("XDG_CURRENT_DESKTOP");
+     backend->log(AQ_LOG_DEBUG, std::format("Connected to a wayland compositor: {}", (XDGCURRENTDESKTOP ? XDGCURRENTDESKTOP : "unknown (XDG_CURRENT_DEKSTOP unset?)")));
+ 
+@@ -96,23 +119,27 @@
+         const std::string NAME = name;
+ 
+         if (NAME == "wl_seat") {
+-            TRACE(backend->log(AQ_LOG_TRACE, std::format("  > binding to global: {} (version {}) with id {}", name, 9, id)));
+-            waylandState.seat = makeShared<CCWlSeat>((wl_proxy*)wl_registry_bind((wl_registry*)waylandState.registry->resource(), id, &wl_seat_interface, 9));
++            uint32_t v = std::min(version, 9u);
++            TRACE(backend->log(AQ_LOG_TRACE, std::format("  > binding to global: {} (version {}) with id {}", name, v, id)));
++            waylandState.seat = makeShared<CCWlSeat>((wl_proxy*)wl_registry_bind((wl_registry*)waylandState.registry->resource(), id, &wl_seat_interface, v));
+             initSeat();
+         } else if (NAME == "xdg_wm_base") {
+-            TRACE(backend->log(AQ_LOG_TRACE, std::format("  > binding to global: {} (version {}) with id {}", name, 6, id)));
+-            waylandState.xdg = makeShared<CCXdgWmBase>((wl_proxy*)wl_registry_bind((wl_registry*)waylandState.registry->resource(), id, &xdg_wm_base_interface, 6));
++            uint32_t v = std::min(version, 6u);
++            TRACE(backend->log(AQ_LOG_TRACE, std::format("  > binding to global: {} (version {}) with id {}", name, v, id)));
++            waylandState.xdg = makeShared<CCXdgWmBase>((wl_proxy*)wl_registry_bind((wl_registry*)waylandState.registry->resource(), id, &xdg_wm_base_interface, v));
+             initShell();
+         } else if (NAME == "wl_compositor") {
+-            TRACE(backend->log(AQ_LOG_TRACE, std::format("  > binding to global: {} (version {}) with id {}", name, 6, id)));
+-            waylandState.compositor = makeShared<CCWlCompositor>((wl_proxy*)wl_registry_bind((wl_registry*)waylandState.registry->resource(), id, &wl_compositor_interface, 6));
++            uint32_t v = std::min(version, 6u);
++            TRACE(backend->log(AQ_LOG_TRACE, std::format("  > binding to global: {} (version {}) with id {}", name, v, id)));
++            waylandState.compositor = makeShared<CCWlCompositor>((wl_proxy*)wl_registry_bind((wl_registry*)waylandState.registry->resource(), id, &wl_compositor_interface, v));
+         } else if (NAME == "wl_shm") {
+             TRACE(backend->log(AQ_LOG_TRACE, std::format("  > binding to global: {} (version {}) with id {}", name, 1, id)));
+             waylandState.shm = makeShared<CCWlShm>((wl_proxy*)wl_registry_bind((wl_registry*)waylandState.registry->resource(), id, &wl_shm_interface, 1));
+         } else if (NAME == "zwp_linux_dmabuf_v1") {
+-            TRACE(backend->log(AQ_LOG_TRACE, std::format("  > binding to global: {} (version {}) with id {}", name, 4, id)));
++            uint32_t v = std::min(version, 4u);
++            TRACE(backend->log(AQ_LOG_TRACE, std::format("  > binding to global: {} (version {}) with id {}", name, v, id)));
+             waylandState.dmabuf =
+-                makeShared<CCZwpLinuxDmabufV1>((wl_proxy*)wl_registry_bind((wl_registry*)waylandState.registry->resource(), id, &zwp_linux_dmabuf_v1_interface, 4));
++                makeShared<CCZwpLinuxDmabufV1>((wl_proxy*)wl_registry_bind((wl_registry*)waylandState.registry->resource(), id, &zwp_linux_dmabuf_v1_interface, v));
+             if (!initDmabuf()) {
+                 backend->log(AQ_LOG_ERROR, "Wayland backend cannot start: zwp_linux_dmabuf_v1 init failed");
+                 waylandState.dmabufFailed = true;
+@@ -123,15 +150,48 @@
+ 
+     wl_display_roundtrip(waylandState.display);
+ 
+-    if (!waylandState.xdg || !waylandState.compositor || !waylandState.seat || !waylandState.dmabuf || waylandState.dmabufFailed || !waylandState.shm) {
++    if (!waylandState.xdg || !waylandState.compositor || !waylandState.seat || !waylandState.shm) {
+         backend->log(AQ_LOG_ERROR, "Wayland backend cannot start: Missing protocols");
+         return false;
+     }
+ 
++    // If linux-dmabuf-v1 is not available (e.g. WSLg), fall back to SHM mode
++    if (!waylandState.dmabuf || waylandState.dmabufFailed) {
++        backend->log(AQ_LOG_WARNING, "Wayland backend: zwp_linux_dmabuf_v1 not available, falling back to wl_shm");
++        useSHM = true;
++
++        // Try to open a DRM render node directly for EGL/allocator use
++        if (drmState.fd < 0) {
++            const char* renderNode = "/dev/dri/renderD128";
++            drmState.fd = open(renderNode, O_RDWR | O_NONBLOCK | O_CLOEXEC);
++            if (drmState.fd >= 0) {
++                drmState.nodeName = renderNode;
++                backend->log(AQ_LOG_DEBUG, std::format("SHM fallback: opened DRM render node {} with fd {}", renderNode, drmState.fd));
++            } else {
++                backend->log(AQ_LOG_WARNING, std::format("SHM fallback: failed to open {}: {}", renderNode, strerror(errno)));
++            }
++        }
++
++        // Provide default render formats since we have no dmabuf format table
++        if (dmabufFormats.empty()) {
++            dmabufFormats.push_back(SDRMFormat{.drmFormat = DRM_FORMAT_ARGB8888,
++                                               .modifiers = {DRM_FORMAT_MOD_INVALID, DRM_FORMAT_MOD_LINEAR}});
++            dmabufFormats.push_back(SDRMFormat{.drmFormat = DRM_FORMAT_XRGB8888,
++                                               .modifiers = {DRM_FORMAT_MOD_INVALID, DRM_FORMAT_MOD_LINEAR}});
++            backend->log(AQ_LOG_DEBUG, "SHM fallback: injected default ARGB8888/XRGB8888 formats");
++        }
++    }
++
+     dispatchEvents();
+ 
+     createOutput();
+ 
++    // Roundtrip to ensure the xdg_surface configure event arrives before
++    // Hyprland tries to commit.  Without this, the first commit attempts
++    // happen before the surface is configured, which would be a protocol
++    // violation (WSLg's Weston enforces this strictly).
++    wl_display_roundtrip(waylandState.display);
++
+     return true;
+ }
+ 
+@@ -157,7 +217,21 @@
+     if (!waylandState.display)
+         return {};
+ 
+-    return {makeShared<SPollFD>(wl_display_get_fd(waylandState.display), [this]() { dispatchEvents(); })};
++    std::vector<Hyprutils::Memory::CSharedPointer<SPollFD>> fds;
++    fds.push_back(makeShared<SPollFD>(wl_display_get_fd(waylandState.display), [this]() { dispatchEvents(); }));
++
++    // The nudge eventfd wakes the event loop when idle callbacks are queued.
++    if (nudgeFd >= 0) {
++        fds.push_back(makeShared<SPollFD>(nudgeFd, [this]() {
++            // Drain the eventfd
++            uint64_t val = 0;
++            read(nudgeFd, &val, sizeof(val));
++            // Process pending idle callbacks
++            dispatchEvents();
++        }));
++    }
++
++    return fds;
+ }
+ 
+ bool Aquamarine::CWaylandBackend::dispatchEvents() {
+@@ -203,6 +277,16 @@
+             continue;
+         }
+     }
++
++    // Send a wl_display.sync request so the host compositor will reply with
++    // a done event.  This ensures the wayland fd becomes readable during the
++    // first event loop poll cycle, which triggers dispatchEvents() and flushes
++    // the pending idle callbacks (newOutput, newKeyboard, newPointer).
++    // Without this, the fd may remain idle after the initial configure exchange
++    // and the idle callbacks never fire.
++    struct wl_callback* cb = wl_display_sync(waylandState.display);
++    wl_callback_add_listener(cb, &kSyncListener, nullptr);
++    wl_display_flush(waylandState.display);
+ }
+ 
+ Aquamarine::CWaylandKeyboard::CWaylandKeyboard(SP<CCWlKeyboard> keyboard_, Hyprutils::Memory::CWeakPointer<CWaylandBackend> backend_) : keyboard(keyboard_), backend(backend_) {
+@@ -476,6 +560,7 @@
+     waylandState.xdgSurface->setConfigure([this](CCXdgSurface* r, uint32_t serial) {
+         backend->backend->log(AQ_LOG_DEBUG, std::format("Output {}: configure surface with {}", name, serial));
+         r->sendAckConfigure(serial);
++        initialConfigureDone = true;
+     });
+ 
+     waylandState.xdgToplevel = makeShared<CCXdgToplevel>(waylandState.xdgSurface->sendGetToplevel());
+@@ -575,6 +660,16 @@
+         return false;
+     }
+ 
++    // Per xdg-shell protocol, we must not attach a buffer before
++    // the xdg_surface has been configured.  WSLg's Weston enforces this
++    // strictly and will kill the connection on violation.
++    if (!initialConfigureDone) {
++        backend->backend->log(AQ_LOG_DEBUG, std::format("Output {}: deferring commit, xdg_surface not yet configured", name));
++        events.commit.emit();
++        state->onCommit();
++        return true;
++    }
++
+     if (!state->internalState.buffer) {
+         // if the consumer explicitly committed a null buffer, that's a violation.
+         if (state->internalState.committed & COutputState::AQ_OUTPUT_STATE_BUFFER) {
+@@ -597,6 +692,12 @@
+     if (wlBuffer->pendingRelease)
+         backend->backend->log(AQ_LOG_WARNING, std::format("Output {}: pending state has a non-released buffer??", name));
+ 
++    // In SHM mode, copy the rendered pixel data into the wl_shm buffer
++    // right before submitting.  The GPU has already rendered into the
++    // DRM-dumb-backed swapchain buffer; we need to read it back to CPU.
++    if (backend->useSHM)
++        wlBuffer->updateSHM();
++
+     wlBuffer->pendingRelease = true;
+ 
+     waylandState.surface->sendAttach(wlBuffer->waylandState.buffer.get(), 0, 0);
+@@ -686,34 +787,74 @@
+     cursorState.cursorBuffer = buffer;
+     cursorState.hotspot      = hotspot;
+ 
+-    if (buffer->shm().success) {
+-        auto attrs                    = buffer->shm();
+-        auto [pixelData, fmt, bufLen] = buffer->beginDataPtr(0);
++    // In SHM mode, or when the buffer reports SHM attributes, use the wl_shm path.
++    // DRM dumb buffers report dmabuf().success = true (they export DMABUFs), but
++    // when zwp_linux_dmabuf_v1 is unavailable we must use wl_shm instead.
++    // DRM dumb buffers support beginDataPtr() so we can read their pixels via CPU.
++    bool forceSHMCursor = backend->useSHM;
++
++    if (buffer->shm().success || forceSHMCursor) {
++        auto dma = buffer->dmabuf();
++        auto shm_ = buffer->shm();
++        int width = 0, height = 0, bstride = 0;
++        uint32_t drmFmt = DRM_FORMAT_ARGB8888;
++
++        if (shm_.success) {
++            width  = shm_.size.x;
++            height = shm_.size.y;
++            bstride = shm_.stride;
++            drmFmt = shm_.format;
++        } else if (dma.success) {
++            width  = dma.size.x;
++            height = dma.size.y;
++            bstride = dma.strides.at(0);
++            drmFmt = dma.format;
++        }
++
++        if (width <= 0 || height <= 0) {
++            backend->backend->log(AQ_LOG_ERROR, std::format("Output {}: cursor buffer has invalid dimensions", name));
++            return false;
++        }
++
++        if (bstride <= 0)
++            bstride = width * 4;
++
++        size_t bufLen = (size_t)bstride * height;
++
++        auto [pixelData, fmt, dataLen] = buffer->beginDataPtr(0);
++        if (!pixelData || dataLen == 0) {
++            backend->backend->log(AQ_LOG_ERROR, std::format("Output {}: Failed to read cursor pixel data", name));
++            return false;
++        }
+ 
+         int fd = allocateSHMFile(bufLen);
+         if (fd < 0) {
+-            backend->backend->log(AQ_LOG_ERROR, std::format("Output {}: Failed to allocate a shm file", name));
++            buffer->endDataPtr();
++            backend->backend->log(AQ_LOG_ERROR, std::format("Output {}: Failed to allocate a shm file for cursor", name));
+             return false;
+         }
+ 
+         void* data = mmap(nullptr, bufLen, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+         if (data == MAP_FAILED) {
++            buffer->endDataPtr();
+             backend->backend->log(AQ_LOG_ERROR, std::format("Output {}: Failed to mmap the cursor pixel data", name));
+             close(fd);
+             return false;
+         }
+ 
+-        memcpy(data, pixelData, bufLen);
++        size_t copyLen = std::min(bufLen, (size_t)dataLen);
++        memcpy(data, pixelData, copyLen);
+         munmap(data, bufLen);
++        buffer->endDataPtr();
+ 
+         auto pool = makeShared<CCWlShmPool>(backend->waylandState.shm->sendCreatePool(fd, bufLen));
+         if (!pool) {
+-            backend->backend->log(AQ_LOG_ERROR, std::format("Output {}: Failed to submit a wl_shm pool", name));
++            backend->backend->log(AQ_LOG_ERROR, std::format("Output {}: Failed to submit a wl_shm pool for cursor", name));
+             close(fd);
+             return false;
+         }
+ 
+-        cursorState.cursorWlBuffer = makeShared<CCWlBuffer>(pool->sendCreateBuffer(0, attrs.size.x, attrs.size.y, attrs.stride, shmFormatFromDRM(attrs.format)));
++        cursorState.cursorWlBuffer = makeShared<CCWlBuffer>(pool->sendCreateBuffer(0, width, height, bstride, shmFormatFromDRM(drmFmt)));
+ 
+         pool.reset();
+ 
+@@ -783,10 +924,87 @@
+             if (auto o = w.lock())
+                 o->sendFrameAndSetCallback();
+         });
++
++        // Wake the event loop so dispatchEvents() runs and processes the
++        // idle callback above.  We write to an eventfd that is registered
++        // as a poll source, guaranteeing the next poll cycle dispatches it.
++        backend->nudge();
+     }
+ }
+ 
+ Aquamarine::CWaylandBuffer::CWaylandBuffer(SP<IBuffer> buffer_, Hyprutils::Memory::CWeakPointer<CWaylandBackend> backend_) : buffer(buffer_), backend(backend_) {
++    // SHM fallback path: allocate a wl_shm pool + wl_buffer at the right
++    // dimensions, but do NOT copy pixel data yet.  updateSHM() will copy the
++    // rendered content just before each wl_surface.commit.
++    if (backend->useSHM) {
++        auto dma  = buffer->dmabuf();
++        auto shm_ = buffer->shm();
++
++        int width = 0, height = 0, stride = 0;
++        uint32_t drmFmt = DRM_FORMAT_ARGB8888;
++
++        if (dma.success) {
++            width  = dma.size.x;
++            height = dma.size.y;
++            stride = dma.strides.at(0);
++            drmFmt = dma.format;
++        } else if (shm_.success) {
++            width  = shm_.size.x;
++            height = shm_.size.y;
++            stride = shm_.stride;
++            drmFmt = shm_.format;
++        }
++
++        if (width <= 0 || height <= 0) {
++            backend->backend->log(AQ_LOG_ERROR, "WaylandBuffer SHM: cannot determine buffer dimensions");
++            return;
++        }
++
++        if (stride <= 0)
++            stride = width * 4;
++
++        size_t bufLen = (size_t)stride * height;
++
++        int fd = allocateSHMFile(bufLen);
++        if (fd < 0) {
++            backend->backend->log(AQ_LOG_ERROR, "WaylandBuffer SHM: failed to allocate shm file");
++            return;
++        }
++
++        void* data = mmap(nullptr, bufLen, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
++        if (data == MAP_FAILED) {
++            close(fd);
++            backend->backend->log(AQ_LOG_ERROR, "WaylandBuffer SHM: mmap failed");
++            return;
++        }
++
++        // Clear to black
++        memset(data, 0, bufLen);
++
++        auto pool = makeShared<CCWlShmPool>(backend->waylandState.shm->sendCreatePool(fd, bufLen));
++        if (!pool) {
++            munmap(data, bufLen);
++            close(fd);
++            backend->backend->log(AQ_LOG_ERROR, "WaylandBuffer SHM: pool creation failed");
++            return;
++        }
++
++        waylandState.buffer = makeShared<CCWlBuffer>(pool->sendCreateBuffer(0, width, height, stride, shmFormatFromDRM(drmFmt)));
++        waylandState.buffer->setRelease([this](CCWlBuffer* r) { pendingRelease = false; });
++        pool->sendDestroy();
++
++        // Keep mapping alive for updateSHM() calls
++        shmState.data   = data;
++        shmState.size   = bufLen;
++        shmState.fd     = fd;
++        shmState.width  = width;
++        shmState.height = height;
++        shmState.stride = stride;
++
++        backend->backend->log(AQ_LOG_DEBUG, std::format("WaylandBuffer SHM: created {}x{} stride={} pool", width, height, stride));
++        return;
++    }
++
+     auto params = makeShared<CCZwpLinuxBufferParamsV1>(backend->waylandState.dmabuf->sendCreateParams());
+ 
+     if (!params) {
+@@ -807,7 +1025,31 @@
+     params->sendDestroy();
+ }
+ 
++bool Aquamarine::CWaylandBuffer::updateSHM() {
++    if (!shmState.data || !shmState.size)
++        return false;
++
++    auto buf = buffer.lock();
++    if (!buf)
++        return false;
++
++    auto [pixelData, fmt, bufLen] = buf->beginDataPtr(0);
++    if (!pixelData || bufLen == 0) {
++        backend->backend->log(AQ_LOG_ERROR, "WaylandBuffer SHM: beginDataPtr failed during update");
++        return false;
++    }
++
++    size_t copyLen = std::min((size_t)bufLen, shmState.size);
++    memcpy(shmState.data, pixelData, copyLen);
++    buf->endDataPtr();
++    return true;
++}
++
+ Aquamarine::CWaylandBuffer::~CWaylandBuffer() {
++    if (shmState.data && shmState.size)
++        munmap(shmState.data, shmState.size);
++    if (shmState.fd >= 0)
++        close(shmState.fd);
+     if (waylandState.buffer && waylandState.buffer->resource())
+         waylandState.buffer->sendDestroy();
+ }
