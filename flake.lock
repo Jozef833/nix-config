@@ -1,5 +1,22 @@
 {
   "nodes": {
+    "aquamarine-wsl": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1772224096,
+        "narHash": "sha256-NGK74Lv89K62riQAJhothrcGKp+eENirfTEmyLJjWUU=",
+        "ref": "wsl-shm-fallback",
+        "rev": "387bf531ea80a2db0d2cd949e56a85bf6fb2310a",
+        "revCount": 323,
+        "type": "git",
+        "url": "file:///home/nixos/Documents/personal/repositories/aquamarine"
+      },
+      "original": {
+        "ref": "wsl-shm-fallback",
+        "type": "git",
+        "url": "file:///home/nixos/Documents/personal/repositories/aquamarine"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -71,6 +88,25 @@
         "owner": "nix-community",
         "repo": "home-manager",
         "type": "github"
+      }
+    },
+    "hyprland-wsl": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1772224104,
+        "narHash": "sha256-vp8ADRWzD+GyfTa1rXie4k22SAxlr199YEgACdz/Dho=",
+        "ref": "wsl-shm-fallback",
+        "rev": "642ed1fee61b5efde95c0e7324a0aa3df3673698",
+        "revCount": 6794,
+        "submodules": true,
+        "type": "git",
+        "url": "file:///home/nixos/Documents/personal/repositories/hyprland"
+      },
+      "original": {
+        "ref": "wsl-shm-fallback",
+        "submodules": true,
+        "type": "git",
+        "url": "file:///home/nixos/Documents/personal/repositories/hyprland"
       }
     },
     "mnw": {
@@ -188,7 +224,9 @@
     },
     "root": {
       "inputs": {
+        "aquamarine-wsl": "aquamarine-wsl",
         "home-manager": "home-manager",
+        "hyprland-wsl": "hyprland-wsl",
         "nixos-wsl": "nixos-wsl",
         "nixpkgs": "nixpkgs",
         "nvf": "nvf"

@@ -22,6 +22,14 @@
     nvf = {
       url = "github:notashelf/nvf";
     };
+    aquamarine-wsl = {
+      url = "git+file:///home/nixos/Documents/personal/repositories/aquamarine?ref=wsl-shm-fallback";
+      flake = false;
+    };
+    hyprland-wsl = {
+      url = "git+file:///home/nixos/Documents/personal/repositories/hyprland?ref=wsl-shm-fallback&submodules=1";
+      flake = false;
+    };
   };
 
   outputs = inputs @ {
@@ -30,6 +38,8 @@
     home-manager,
     nvf,
     nixos-wsl,
+    aquamarine-wsl,
+    hyprland-wsl,
     ...
   }:
   let
@@ -48,15 +58,17 @@
       modules = [
         nixos-wsl.nixosModules.default
 
-        # Overlays: patch aquamarine + hyprland for WSLg compatibility
+        # Overlays: use local forks of aquamarine + hyprland with WSLg fixes
         {
           nixpkgs.overlays = [
             (final: prev: {
               aquamarine = prev.aquamarine.overrideAttrs (old: {
-                patches = (old.patches or []) ++ [ ./patches/aquamarine-wsl-shm.patch ];
+                src = aquamarine-wsl;
+                patches = [];
               });
               hyprland = prev.hyprland.overrideAttrs (old: {
-                patches = (old.patches or []) ++ [ ./patches/hyprland-wsl-renderbuffer.patch ];
+                src = hyprland-wsl;
+                patches = [];
               });
             })
           ];
