@@ -225,6 +225,8 @@
     gpg-agent = {
       enable = true;
       enableSshSupport = true;
+      defaultCacheTtl = 28800;
+      maxCacheTtl = 28800;
       pinentry = {
         package = pkgs.pinentry-curses;
       };
