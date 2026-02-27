@@ -16,6 +16,19 @@
       git-credential-manager
       ripgrep
       wl-clipboard
+
+      # WSL Hyprland launcher — sets the env vars needed before
+      # Hyprland's EGL init (which happens before config loading).
+      (writeShellScriptBin "hyprland-wsl" ''
+        # Clean stale lock/socket from previous runs
+        rm -f /mnt/wslg/runtime-dir/wayland-1.lock /mnt/wslg/runtime-dir/wayland-1 2>/dev/null
+
+        exec env \
+          WAYLAND_DISPLAY=wayland-0 \
+          XDG_RUNTIME_DIR=/mnt/wslg/runtime-dir \
+          MESA_LOADER_DRIVER_OVERRIDE=kms_swrast \
+          Hyprland "$@"
+      '')
     ];
     shellAliases = {
       lg = "lazygit";

@@ -7,11 +7,16 @@
 }:
 
 {
-  # Load vgem kernel module to create /dev/dri/renderD128.
+  # Load vgem kernel module to create /dev/dri/card0 and /dev/dri/renderD128.
   # WSL2's dxgkrnl never creates DRM render nodes; vgem (Virtual GEM provider)
   # provides GEM operations that satisfy GBM allocator requirements.
   # The module exists in the stock WSL kernel at:
   #   /lib/modules/*/kernel/drivers/gpu/drm/vgem/vgem.ko
+  #
+  # NOTE: boot.kernelModules feeds systemd-modules-load.service, but NixOS-WSL
+  # doesn't create /etc/modules-load.d/ so the service's ConditionDirectoryNotEmpty
+  # check fails and it never runs. We keep this for documentation and add an
+  # explicit environment.etc entry below to actually create the file.
   boot.kernelModules = [ "vgem" ];
 
   environment = {
@@ -85,13 +90,36 @@
     stateVersion = stateVersion;
   };
 
-  # Make /dev/dri/card0 (vgem primary node) accessible to the video group.
-  # WSL2 creates it with group 39 (not mapped to any NixOS group).
-  # The DRM dumb buffer allocator requires the primary node for buffer
-  # allocation — the render node (renderD128) doesn't support dumb buffers.
-  services.udev.extraRules = ''
-    SUBSYSTEM=="drm", KERNEL=="card[0-9]*", MODE="0666"
-  '';
+  # NixOS-WSL doesn't create /etc/modules-load.d/, so systemd-modules-load.service
+  # skips (ConditionDirectoryNotEmpty fails). Explicitly create the file so vgem
+  # loads automatically at boot.
+  environment.etc."modules-load.d/vgem.conf".text = "vgem\n";
+
+  # Make /dev/dri/ nodes (vgem) world-accessible.
+  # WSL2 creates card0 with group 39 (not mapped to any NixOS group), and
+  # NixOS-WSL doesn't deploy /etc/udev/rules.d/ so services.udev.extraRules
+  # has no effect. systemd-tmpfiles 'z' directives reliably set permissions
+  # on existing device nodes — the same mechanism NixOS uses for /dev/kvm etc.
+  # The DRM dumb buffer allocator requires the primary node (card0) for buffer
+  # allocation; the render node (renderD128) is also opened by Mesa.
+  systemd.tmpfiles.rules = [
+    "z /dev/dri/card0     0666 - - -"
+    "z /dev/dri/renderD128 0666 - - -"
+  ];
+
+  # After vgem loads, /dev/dri/card0 appears but tmpfiles may have already run.
+  # This oneshot re-applies the tmpfiles permissions after modules finish loading.
+  systemd.services.fix-dri-permissions = {
+    description = "Set /dev/dri permissions after vgem loads";
+    after = [ "systemd-modules-load.service" "systemd-udev-settle.service" ];
+    wants = [ "systemd-modules-load.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.systemd}/bin/systemd-tmpfiles --create --prefix=/dev/dri";
+      RemainAfterExit = true;
+    };
+  };
 
   users = {
     users = {
