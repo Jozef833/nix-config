@@ -242,18 +242,28 @@
       "$terminal" = "kitty";
 
       # WSLg nested compositor environment
+      #
+      # NOTE: WAYLAND_DISPLAY and XDG_RUNTIME_DIR are NOT set here.
+      # They are set when *launching* Hyprland (so Aquamarine finds WSLg).
+      # Hyprland auto-sets WAYLAND_DISPLAY for child apps to its own
+      # socket (wayland-1), so we must not override it to wayland-0.
       env = [
         "WLR_NO_HARDWARE_CURSORS,1"
         "XCURSOR_SIZE,24"
-        # Ensure Aquamarine can find the WSLg parent Wayland compositor
-        "WAYLAND_DISPLAY,wayland-0"
-        "XDG_RUNTIME_DIR,/mnt/wslg/runtime-dir"
-        # Override Mesa driver for Hyprland's EGL context. The system default
-        # (d3d12) can't create an EGL screen on vgem's renderD128. kms_swrast
-        # is a software rasterizer that works with any DRM device supporting
-        # dumb buffers (which vgem does). Hyprland renders via CPU and submits
-        # frames to WSLg through wl_shm.
+        # Override Mesa driver so Hyprland can create an EGL context on
+        # vgem's /dev/dri/renderD128. The system default (d3d12) cannot
+        # initialize EGL on vgem. Child GUI apps (kitty, firefox, etc.)
+        # will also use kms_swrast — acceptable since the real GPU is
+        # used for Hyprland's compositing via the d3d12-backed EGL.
         "MESA_LOADER_DRIVER_OVERRIDE,kms_swrast"
+        # kms_swrast EGL reports dmabuf format support but cannot
+        # actually import cross-device dmabufs. Without this, Hyprland
+        # advertises zwp_linux_dmabuf_v1 and clients (kitty, etc.) try
+        # to present frames via dmabuf — which fails and kills them.
+        # With this set, m_drmFormats stays empty, the protocol is not
+        # advertised, and Mesa's Wayland EGL in clients falls back to
+        # wl_shm buffer sharing automatically.
+        "HYPRLAND_NO_DMABUF,1"
       ];
 
       # Monitor config for nested WSLg window.

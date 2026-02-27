@@ -93,11 +93,11 @@
     "hyprland-wsl": {
       "flake": false,
       "locked": {
-        "lastModified": 1772224104,
-        "narHash": "sha256-vp8ADRWzD+GyfTa1rXie4k22SAxlr199YEgACdz/Dho=",
+        "lastModified": 1772227791,
+        "narHash": "sha256-nFYsXFFKI3gKBf7khZrqJFOZFVeXG+NeME47Mf2LBhI=",
         "ref": "wsl-shm-fallback",
-        "rev": "642ed1fee61b5efde95c0e7324a0aa3df3673698",
-        "revCount": 6794,
+        "rev": "0b3360b8e29a18130041b0425787e190dd18bad8",
+        "revCount": 6796,
         "submodules": true,
         "type": "git",
         "url": "file:///home/nixos/Documents/personal/repositories/hyprland"
