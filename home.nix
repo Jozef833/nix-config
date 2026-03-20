@@ -14,6 +14,7 @@
     packages = with pkgs; [
       eza
       git-credential-manager
+      nerd-fonts.jetbrains-mono
       ripgrep
       wl-clipboard
     ];
@@ -86,10 +87,6 @@
     };
 
     gpg = {
-      enable = true;
-    };
-
-    kitty = {
       enable = true;
     };
 
