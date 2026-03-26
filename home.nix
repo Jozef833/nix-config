@@ -32,7 +32,7 @@
     };
 
     claude-code = {
-      enable = false;
+      enable = true;
       enableMcpIntegration = true;
       settings = {
         defaultMode = "acceptEdits";
@@ -40,7 +40,7 @@
           CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = 1;
         };
         includeCoAuthoredBy = false;
-        theme = "dark-ansi";
+        theme = "dark";
       };
     };
 
@@ -115,12 +115,33 @@
       enable = true;
       servers = {
         atlassian = {
+          disabled = true;
           url = "https://mcp.atlassian.com/v1/mcp";
         };
-        /*github = {
-          url = "https://api.githubcopilot.com/mcp/insiders";
-        };*/
+        azure = {
+          disabled = true;
+          args = [
+            "server"
+            "start"
+          ];
+          command = "${inputs.azure-mcp.packages.x86_64-linux.default}/bin/azmcp";
+          env = {
+            AZURE_MCP_COLLECT_TELEMETRY = "false";
+          };
+        };
+        azure-devops = {
+          disabled = true;
+          args = [
+            "onmilliman"
+          ];
+          command = "${inputs.azure-devops-mcp.packages.x86_64-linux.default}/bin/mcp-server-azuredevops";
+        };
+        github_grep = {
+          disabled = true;
+          url = "https://mcp.grep.app";
+        };
         playwright = {
+          disabled = true;
           command = "${pkgs.playwright-mcp}/bin/mcp-server-playwright";
         };
       };
@@ -218,6 +239,11 @@
     opencode = {
       enable = true;
       enableMcpIntegration = true;
+      settings = {
+        plugin = [
+          "superpowers@git+https://github.com/obra/superpowers.git#${inputs.superpowers.rev}"
+        ];
+      };
     };
 
     password-store = {

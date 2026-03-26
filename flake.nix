@@ -1,5 +1,13 @@
 {
   inputs = {
+    azure-devops-mcp = {
+      inputs.nixpkgs.follows = "nixpkgs";
+      url = "github:jozef833/azure-devops-mcp";
+    };
+    azure-mcp = {
+      inputs.nixpkgs.follows = "nixpkgs";
+      url = "github:jozef833/azure-mcp";
+    };
     home-manager = {
       inputs = {
         nixpkgs = {
@@ -21,6 +29,10 @@
     };
     nvf = {
       url = "github:notashelf/nvf";
+    };
+    superpowers = {
+      flake = false;
+      url = "github:obra/superpowers";
     };
   };
 
