@@ -35,6 +35,7 @@
     claude-code = {
       enable = true;
       enableMcpIntegration = true;
+      plugins = [ inputs.superpowers ];
       settings = {
         apiKeyHelper = "cat /run/secrets/anthropic-api-key";
         defaultMode = "acceptEdits";
@@ -42,9 +43,6 @@
           CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = 1;
         };
         includeCoAuthoredBy = false;
-        plugin = [
-          "superpowers@git+https://github.com/obra/superpowers.git#${inputs.superpowers.rev}"
-        ];
         theme = "dark";
       };
     };
@@ -254,6 +252,15 @@
     password-store = {
       enable = true;
       settings = { };
+    };
+
+    tmux = {
+      enable = true;
+      baseIndex = 1;
+      escapeTime = 0;
+      keyMode = "vi";
+      mouse = true;
+      shortcut = "a";
     };
   };
 
