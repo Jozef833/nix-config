@@ -20,9 +20,9 @@
       MESA_LOADER_DRIVER_OVERRIDE = "d3d12";
     };
     systemPackages = with pkgs; [
-      cifs-utils  # CIFS/SMB mount support for network shares
-      kmod  # Provides modprobe/lsmod for kernel module management
-      wget  # Needed for VS Code WSL (along with nix-ld): https://nix-community.github.io/NixOS-WSL/how-to/vscode.html
+      cifs-utils # CIFS/SMB mount support for network shares
+      kmod # Provides modprobe/lsmod for kernel module management
+      wget # Needed for VS Code WSL (along with nix-ld): https://nix-community.github.io/NixOS-WSL/how-to/vscode.html
     ];
   };
 
@@ -43,8 +43,8 @@
       "gid=100"
       "file_mode=0664"
       "dir_mode=0775"
-      "nofail"                    # don't block boot if share is unreachable
-      "x-systemd.automount"       # mount on first access, not at boot
+      "nofail" # don't block boot if share is unreachable
+      "x-systemd.automount" # mount on first access, not at boot
       "x-systemd.idle-timeout=60"
     ];
   };
@@ -60,8 +60,8 @@
       "gid=100"
       "file_mode=0664"
       "dir_mode=0775"
-      "nofail"                    # don't block boot if share is unreachable
-      "x-systemd.automount"       # mount on first access, not at boot
+      "nofail" # don't block boot if share is unreachable
+      "x-systemd.automount" # mount on first access, not at boot
       "x-systemd.idle-timeout=60"
     ];
   };
@@ -87,9 +87,11 @@
   nixpkgs = {
     config = {
       allowUnfree = false;
-      allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-        "claude-code"
-      ];
+      allowUnfreePredicate =
+        pkg:
+        builtins.elem (lib.getName pkg) [
+          "claude-code"
+        ];
     };
   };
 
@@ -114,6 +116,18 @@
     };
   };
 
+  sops = {
+    defaultSopsFile = ./secrets.yaml;
+    age = {
+      keyFile = "/home/${username}/.config/sops/age/keys.txt";
+    };
+    secrets = {
+      "anthropic-api-key" = {
+        owner = username;
+      };
+    };
+  };
+
   system = {
     stateVersion = stateVersion;
   };
@@ -121,7 +135,7 @@
   users = {
     users = {
       ${username} = {
-        extraGroups = [ 
+        extraGroups = [
           "render"
           "video"
         ];

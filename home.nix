@@ -34,7 +34,9 @@
     claude-code = {
       enable = true;
       enableMcpIntegration = true;
+      plugins = [ inputs.superpowers ];
       settings = {
+        apiKeyHelper = "cat /run/secrets/anthropic-api-key";
         defaultMode = "acceptEdits";
         env = {
           CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = 1;
