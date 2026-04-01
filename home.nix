@@ -14,11 +14,13 @@
   home = {
     packages = with pkgs; [
       eza
-      git-credential-manager
       nerd-fonts.jetbrains-mono
       ripgrep
       wl-clipboard
     ];
+    file.".ssh/allowed_signers".text =
+      "172046463+Jozef833@users.noreply.github.com "
+      + builtins.readFile ./keys/ssh.pub;
     shellAliases = {
       lg = "lazygit";
       ls = "eza";
@@ -60,7 +62,7 @@
         enable = false;
       };
       settings = {
-        git_protocol = "https";
+        git_protocol = "ssh";
       };
     };
 
@@ -70,27 +72,21 @@
 
     git = {
       enable = true;
+      signing = {
+        key = "/run/secrets/ssh-key";
+        signByDefault = true;
+      };
       settings = {
-        credential = {
-          credentialStore = "gpg";
-          helper = "manager";
-          useHttpPath = true;
+        gpg = {
+          format = "ssh";
+          ssh.allowedSignersFile = "~/.ssh/allowed_signers";
         };
-        init = {
-          defaultBranch = "main";
-        };
+        init.defaultBranch = "main";
         user = {
           email = "172046463+Jozef833@users.noreply.github.com";
           name = "Jozef833";
         };
       };
-      signing = {
-        signByDefault = true;
-      };
-    };
-
-    gpg = {
-      enable = true;
     };
 
     lazygit = {
@@ -249,9 +245,12 @@
       };
     };
 
-    password-store = {
+    ssh = {
       enable = true;
-      settings = { };
+      matchBlocks."github.com" = {
+        identityFile = "/run/secrets/ssh-key";
+        identitiesOnly = true;
+      };
     };
 
     tmux = {
@@ -264,19 +263,4 @@
     };
   };
 
-  services = {
-    gpg-agent = {
-      enable = true;
-      enableSshSupport = true;
-      defaultCacheTtl = 28800;
-      maxCacheTtl = 28800;
-      pinentry = {
-        package = pkgs.pinentry-curses;
-      };
-    };
-
-    pass-secret-service = {
-      enable = true;
-    };
-  };
 }

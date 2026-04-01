@@ -37,12 +37,12 @@
     device = "//milw-isilon-prod-smb.milliman.com/milwh-users$/Jozef.Porubcin";
     fsType = "cifs";
     options = [
-      "credentials=/etc/samba/credentials-Jozef.Porubcinai"
+      "credentials=/run/secrets/samba-credentials"
       "domain=milliman.com"
       "uid=1000"
       "gid=100"
-      "file_mode=0664"
-      "dir_mode=0775"
+      "file_mode=0600"
+      "dir_mode=0700"
       "nofail" # don't block boot if share is unreachable
       "x-systemd.automount" # mount on first access, not at boot
       "x-systemd.idle-timeout=60"
@@ -54,12 +54,12 @@
     device = "//milw-isilon-prod-smb.milliman.com/milwh-docs$";
     fsType = "cifs";
     options = [
-      "credentials=/etc/samba/credentials-Jozef.Porubcinai"
+      "credentials=/run/secrets/samba-credentials"
       "domain=milliman.com"
       "uid=1000"
       "gid=100"
-      "file_mode=0664"
-      "dir_mode=0775"
+      "file_mode=0600"
+      "dir_mode=0700"
       "nofail" # don't block boot if share is unreachable
       "x-systemd.automount" # mount on first access, not at boot
       "x-systemd.idle-timeout=60"
@@ -123,6 +123,10 @@
     };
     secrets = {
       "anthropic-api-key" = {
+        owner = username;
+      };
+      "samba-credentials" = { };
+      "ssh-key" = {
         owner = username;
       };
     };
