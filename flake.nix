@@ -8,6 +8,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
       url = "github:jozef833/azure-mcp";
     };
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+    };
+    git-hooks-nix = {
+      inputs.nixpkgs.follows = "nixpkgs";
+      url = "github:cachix/git-hooks.nix";
+    };
     home-manager = {
       inputs = {
         nixpkgs = {
@@ -42,11 +49,10 @@
 
   outputs =
     inputs@{
-      self,
-      nixpkgs,
+      flake-parts,
       home-manager,
-      nvf,
       nixos-wsl,
+      nixpkgs,
       sops-nix,
       ...
     }:
@@ -62,39 +68,64 @@
       system = "x86_64-linux";
       username = "nixos";
     in
-    {
-      nixosConfigurations.${hostname} = nixpkgs.lib.nixosSystem {
-        modules = [
-          nixos-wsl.nixosModules.default
-          sops-nix.nixosModules.sops
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [
+        inputs.git-hooks-nix.flakeModule
+      ];
 
-          ./configuration.nix
+      systems = [ system ];
 
-          home-manager.nixosModules.home-manager
-          {
-            home-manager = {
-              extraSpecialArgs = {
-                inherit inputs;
+      flake = {
+        nixosConfigurations.${hostname} = nixpkgs.lib.nixosSystem {
+          modules = [
+            nixos-wsl.nixosModules.default
+            sops-nix.nixosModules.sops
+
+            ./configuration.nix
+
+            home-manager.nixosModules.home-manager
+            {
+              home-manager = {
+                extraSpecialArgs = {
+                  inherit inputs;
+                };
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                users = {
+                  ${username} = ./home.nix;
+                };
               };
-              useGlobalPkgs = true;
-              useUserPackages = true;
-              users = {
-                ${username} = ./home.nix;
-              };
-            };
-          }
-        ];
+            }
+          ];
 
-        specialArgs = {
-          inherit
-            hostname
-            inputs
-            stateVersion
-            username
-            ;
+          specialArgs = {
+            inherit
+              hostname
+              inputs
+              stateVersion
+              username
+              ;
+          };
+
+          inherit system;
         };
-
-        system = system;
       };
+
+      perSystem =
+        { config, pkgs, ... }:
+        {
+          pre-commit.settings.hooks = {
+            nixfmt.enable = true;
+            deadnix.enable = true;
+            statix.enable = true;
+          };
+
+          devShells.default = pkgs.mkShell {
+            shellHook = ''
+              ${config.pre-commit.shellHook}
+            '';
+            packages = config.pre-commit.settings.enabledPackages;
+          };
+        };
     };
 }

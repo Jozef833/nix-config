@@ -133,7 +133,7 @@
   };
 
   system = {
-    stateVersion = stateVersion;
+    inherit stateVersion;
   };
 
   users = {
