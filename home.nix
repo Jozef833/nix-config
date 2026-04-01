@@ -247,6 +247,7 @@
 
     ssh = {
       enable = true;
+      enableDefaultConfig = false;
       matchBlocks."github.com" = {
         identityFile = "/run/secrets/ssh-key";
         identitiesOnly = true;
