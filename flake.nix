@@ -45,6 +45,10 @@
       flake = false;
       url = "github:obra/superpowers";
     };
+    workiq-mcp = {
+      inputs.nixpkgs.follows = "nixpkgs";
+      url = "github:Jozef833/workiq-mcp";
+    };
   };
 
   outputs =

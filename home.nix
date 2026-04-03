@@ -1,5 +1,4 @@
 {
-  config,
   inputs,
   osConfig,
   pkgs,
@@ -19,8 +18,7 @@
       wl-clipboard
     ];
     file.".ssh/allowed_signers".text =
-      "172046463+Jozef833@users.noreply.github.com "
-      + builtins.readFile ./keys/ssh.pub;
+      "172046463+Jozef833@users.noreply.github.com " + builtins.readFile ./keys/ssh.pub;
     shellAliases = {
       lg = "lazygit";
       ls = "eza";
@@ -135,6 +133,10 @@
           ];
           command = "${inputs.azure-devops-mcp.packages.x86_64-linux.default}/bin/mcp-server-azuredevops";
         };
+        exa = {
+          disabled = true;
+          url = "https://mcp.exa.ai/mcp";
+        };
         github_grep = {
           disabled = true;
           url = "https://mcp.grep.app";
@@ -142,6 +144,11 @@
         playwright = {
           disabled = true;
           command = "${pkgs.playwright-mcp}/bin/mcp-server-playwright";
+        };
+        workiq = {
+          disabled = true;
+          args = [ "mcp" ];
+          command = "${inputs.workiq-mcp.packages.x86_64-linux.default}/bin/workiq";
         };
       };
     };
@@ -242,6 +249,7 @@
         plugin = [
           "superpowers@git+https://github.com/obra/superpowers.git#${inputs.superpowers.rev}"
         ];
+        share = "disabled";
       };
     };
 

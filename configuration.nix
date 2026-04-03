@@ -23,6 +23,7 @@
       cifs-utils # CIFS/SMB mount support for network shares
       kmod # Provides modprobe/lsmod for kernel module management
       wget # Needed for VS Code WSL (along with nix-ld): https://nix-community.github.io/NixOS-WSL/how-to/vscode.html
+      wslu # WSL utilities — provides wslview for opening URLs in the Windows browser
     ];
   };
 
@@ -33,7 +34,7 @@
   };
 
   # O: drive — \\milw-isilon-prod-smb.milliman.com\milwh-users$\Jozef.Porubcin
-  fileSystems."/mnt/network/Jozef.Porubcinai/milwh-users$/Jozef.Porubcin" = {
+  fileSystems."/mnt/network/o" = {
     device = "//milw-isilon-prod-smb.milliman.com/milwh-users$/Jozef.Porubcin";
     fsType = "cifs";
     options = [
@@ -50,7 +51,7 @@
   };
 
   # T: drive — \\milw-isilon-prod-smb.milliman.com\milwh-docs$
-  fileSystems."/mnt/network/Jozef.Porubcinai/milwh-docs$" = {
+  fileSystems."/mnt/network/t" = {
     device = "//milw-isilon-prod-smb.milliman.com/milwh-docs$";
     fsType = "cifs";
     options = [
@@ -91,6 +92,7 @@
         pkg:
         builtins.elem (lib.getName pkg) [
           "claude-code"
+          "workiq"
         ];
     };
   };
