@@ -23,6 +23,10 @@
       };
       url = "github:nix-community/home-manager";
     };
+    m365-mcp = {
+      inputs.nixpkgs.follows = "nixpkgs";
+      url = "github:jozef833/m365-mcp";
+    };
     nixos-wsl = {
       inputs = {
         nixpkgs = {

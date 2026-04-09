@@ -18,7 +18,7 @@
       wl-clipboard
     ];
     file.".ssh/allowed_signers".text =
-      "172046463+Jozef833@users.noreply.github.com " + builtins.readFile ./keys/ssh.pub;
+      "172046463+Jozef833@users.noreply.github.com " + builtins.readFile ./keys/ssh-github.pub;
     shellAliases = {
       lg = "lazygit";
       ls = "eza";
@@ -71,7 +71,7 @@
     git = {
       enable = true;
       signing = {
-        key = "/run/secrets/ssh-key";
+        key = "/run/secrets/ssh-github";
         signByDefault = true;
       };
       settings = {
@@ -140,6 +140,10 @@
         github_grep = {
           disabled = true;
           url = "https://mcp.grep.app";
+        };
+        m365 = {
+          disabled = true;
+          command = "${inputs.m365-mcp.packages.x86_64-linux.default}/bin/cli-microsoft365-mcp-server";
         };
         playwright = {
           disabled = true;
@@ -246,6 +250,7 @@
       enable = true;
       enableMcpIntegration = true;
       settings = {
+        autoupdate = false;
         plugin = [
           "superpowers@git+https://github.com/obra/superpowers.git#${inputs.superpowers.rev}"
         ];
@@ -257,8 +262,12 @@
       enable = true;
       enableDefaultConfig = false;
       matchBlocks."github.com" = {
-        identityFile = "/run/secrets/ssh-key";
         identitiesOnly = true;
+        identityFile = "/run/secrets/ssh-github";
+      };
+      matchBlocks."ssh.dev.azure.com" = {
+        identitiesOnly = true;
+        identityFile = "/run/secrets/ssh-azure-devops";
       };
     };
 
@@ -271,5 +280,4 @@
       shortcut = "a";
     };
   };
-
 }

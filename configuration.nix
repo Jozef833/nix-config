@@ -104,17 +104,17 @@
     };
   };
 
-  xdg.portal = {
-    enable = true;
-    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
-    config.common.default = "gtk";
-  };
-
   security = {
     pki = {
       certificateFiles = [
         ./ZscalerRootCertificate-2048-SHA256-Feb2025.crt
       ];
+    };
+  };
+
+  services = {
+    qdrant = {
+      enable = true;
     };
   };
 
@@ -128,7 +128,10 @@
         owner = username;
       };
       "samba-credentials" = { };
-      "ssh-key" = {
+      "ssh-azure-devops" = {
+        owner = username;
+      };
+      "ssh-github" = {
         owner = username;
       };
     };
@@ -167,5 +170,11 @@
     enable = true;
     defaultUser = username;
     useWindowsDriver = true;
+  };
+
+  xdg.portal = {
+    enable = true;
+    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+    config.common.default = "gtk";
   };
 }
