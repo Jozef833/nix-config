@@ -16,11 +16,7 @@
       url = "github:cachix/git-hooks.nix";
     };
     home-manager = {
-      inputs = {
-        nixpkgs = {
-          follows = "nixpkgs";
-        };
-      };
+      inputs.nixpkgs.follows = "nixpkgs";
       url = "github:nix-community/home-manager";
     };
     m365-mcp = {
@@ -28,26 +24,19 @@
       url = "github:jozef833/m365-mcp";
     };
     nixos-wsl = {
-      inputs = {
-        nixpkgs = {
-          follows = "nixpkgs";
-        };
-      };
+      inputs.nixpkgs.follows = "nixpkgs";
       url = "github:nix-community/nixos-wsl";
     };
     nixpkgs = {
       url = "github:nixos/nixpkgs/nixos-unstable";
     };
     nvf = {
+      inputs.nixpkgs.follows = "nixpkgs";
       url = "github:notashelf/nvf";
     };
     sops-nix = {
       inputs.nixpkgs.follows = "nixpkgs";
       url = "github:Mic92/sops-nix";
-    };
-    superpowers = {
-      flake = false;
-      url = "github:obra/superpowers";
     };
     workiq-mcp = {
       inputs.nixpkgs.follows = "nixpkgs";
@@ -86,9 +75,6 @@
       flake = {
         nixosConfigurations.${hostname} = nixpkgs.lib.nixosSystem {
           modules = [
-            nixos-wsl.nixosModules.default
-            sops-nix.nixosModules.sops
-
             ./configuration.nix
 
             home-manager.nixosModules.home-manager
@@ -104,6 +90,10 @@
                 };
               };
             }
+
+            nixos-wsl.nixosModules.default
+
+            sops-nix.nixosModules.sops
           ];
 
           specialArgs = {
@@ -122,17 +112,17 @@
       perSystem =
         { config, pkgs, ... }:
         {
-          pre-commit.settings.hooks = {
-            nixfmt.enable = true;
-            deadnix.enable = true;
-            statix.enable = true;
-          };
-
           devShells.default = pkgs.mkShell {
+            packages = config.pre-commit.settings.enabledPackages;
             shellHook = ''
               ${config.pre-commit.shellHook}
             '';
-            packages = config.pre-commit.settings.enabledPackages;
+          };
+
+          pre-commit.settings.hooks = {
+            deadnix.enable = true;
+            nixfmt.enable = true;
+            statix.enable = true;
           };
         };
     };

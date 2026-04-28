@@ -23,7 +23,6 @@
       cifs-utils # CIFS/SMB mount support for network shares
       kmod # Provides modprobe/lsmod for kernel module management
       wget # Needed for VS Code WSL (along with nix-ld): https://nix-community.github.io/NixOS-WSL/how-to/vscode.html
-      wslu # WSL utilities — provides wslview for opening URLs in the Windows browser
     ];
   };
 
@@ -112,17 +111,11 @@
     };
   };
 
-  services = {
-    qdrant = {
-      enable = true;
-    };
-  };
-
   sops = {
-    defaultSopsFile = ./secrets.yaml;
     age = {
       keyFile = "/home/${username}/.config/sops/age/keys.txt";
     };
+    defaultSopsFile = ./secrets.yaml;
     secrets = {
       "anthropic-api-key" = {
         owner = username;

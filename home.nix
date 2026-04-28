@@ -13,6 +13,7 @@
   home = {
     packages = with pkgs; [
       eza
+      lsof # Required for opencode-nvim
       nerd-fonts.jetbrains-mono
       ripgrep
       wl-clipboard
@@ -35,7 +36,6 @@
     claude-code = {
       enable = true;
       enableMcpIntegration = true;
-      plugins = [ inputs.superpowers ];
       settings = {
         apiKeyHelper = "cat /run/secrets/anthropic-api-key";
         defaultMode = "acceptEdits";
@@ -168,6 +168,12 @@
               enable = true;
             };
           };
+          extraPlugins = {
+            opencode-nvim = {
+              package = pkgs.vimPlugins.opencode-nvim;
+              setup = builtins.readFile ./nvf/opencode.lua;
+            };
+          };
           languages = {
             enableExtraDiagnostics = true;
             enableTreesitter = true;
@@ -198,14 +204,14 @@
             sql = {
               enable = true;
             };
-            ts = {
+            typescript = {
               enable = true;
             };
             yaml = {
               enable = true;
             };
           };
-          lineNumberMode = "relative";
+          lineNumberMode = "relNumber";
           lsp = {
             enable = true;
           };
@@ -251,9 +257,6 @@
       enableMcpIntegration = true;
       settings = {
         autoupdate = false;
-        plugin = [
-          "superpowers@git+https://github.com/obra/superpowers.git#${inputs.superpowers.rev}"
-        ];
         share = "disabled";
       };
     };
@@ -262,10 +265,12 @@
       enable = true;
       enableDefaultConfig = false;
       matchBlocks."github.com" = {
+        addKeysToAgent = "yes";
         identitiesOnly = true;
         identityFile = "/run/secrets/ssh-github";
       };
       matchBlocks."ssh.dev.azure.com" = {
+        addKeysToAgent = "yes";
         identitiesOnly = true;
         identityFile = "/run/secrets/ssh-azure-devops";
       };
@@ -278,6 +283,12 @@
       keyMode = "vi";
       mouse = true;
       shortcut = "a";
+    };
+  };
+
+  services = {
+    ssh-agent = {
+      enable = true;
     };
   };
 }
