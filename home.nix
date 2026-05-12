@@ -147,7 +147,7 @@
         };
         playwright = {
           disabled = true;
-          command = "${pkgs.playwright-mcp}/bin/mcp-server-playwright";
+          command = "${pkgs.playwright-mcp}/bin/playwright-mcp";
         };
         workiq = {
           disabled = true;
