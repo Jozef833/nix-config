@@ -32,28 +32,24 @@
     };
   };
 
-  # O: drive — \\milw-isilon-prod-smb.milliman.com\milwh-users$\Jozef.Porubcin
-  /*
-    fileSystems."/mnt/network/o" = {
-      device = "//milw-isilon-prod-smb.milliman.com/milwh-users$/Jozef.Porubcin";
-      fsType = "cifs";
-      options = [
-        "credentials=/run/secrets/samba-credentials"
-        "domain=milliman.com"
-        "uid=1000"
-        "gid=100"
-        "file_mode=0600"
-        "dir_mode=0700"
-        "nofail" # don't block boot if share is unreachable
-        "x-systemd.automount" # mount on first access, not at boot
-        "x-systemd.idle-timeout=60"
-      ];
-    };
-  */
+  fileSystems."/mnt/network/o" = {
+    device = "//milw-isilon-prod-smb.milliman.com/milwh-users$/jozef.porubcin";
+    fsType = "cifs";
+    options = [
+      "credentials=/run/secrets/samba-credentials"
+      "domain=milliman.com"
+      "uid=1000"
+      "gid=100"
+      "file_mode=0600"
+      "dir_mode=0700"
+      "nofail" # don't block boot if share is unreachable
+      "x-systemd.automount" # mount on first access, not at boot
+      "x-systemd.idle-timeout=60"
+    ];
+  };
 
-  # T: drive — \\milw-isilon-prod-smb.milliman.com\milwh-docs$
-  fileSystems."/mnt/network/t" = {
-    device = "//milw-isilon-prod-smb.milliman.com/milwh-docs$";
+  fileSystems."/mnt/network/t/MISC" = {
+    device = "//milw-isilon-prod-smb.milliman.com/milwh-docs$/MISC";
     fsType = "cifs";
     options = [
       "credentials=/run/secrets/samba-credentials"
@@ -93,7 +89,7 @@
         pkg:
         builtins.elem (lib.getName pkg) [
           "claude-code"
-          "workiq"
+          "postman"
         ];
     };
   };

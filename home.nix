@@ -13,8 +13,8 @@
   home = {
     packages = with pkgs; [
       eza
-      lsof # Required for opencode-nvim
       nerd-fonts.jetbrains-mono
+      postman
       ripgrep
       wl-clipboard
     ];
@@ -64,10 +64,6 @@
       };
     };
 
-    gh-dash = {
-      enable = true;
-    };
-
     git = {
       enable = true;
       signing = {
@@ -115,17 +111,6 @@
           disabled = true;
           url = "https://mcp.atlassian.com/v1/mcp";
         };
-        azure = {
-          disabled = true;
-          args = [
-            "server"
-            "start"
-          ];
-          command = "${inputs.azure-mcp.packages.x86_64-linux.default}/bin/azmcp";
-          env = {
-            AZURE_MCP_COLLECT_TELEMETRY = "false";
-          };
-        };
         azure-devops = {
           disabled = true;
           args = [
@@ -141,18 +126,12 @@
           disabled = true;
           url = "https://mcp.grep.app";
         };
-        m365 = {
-          disabled = true;
-          command = "${inputs.m365-mcp.packages.x86_64-linux.default}/bin/cli-microsoft365-mcp-server";
-        };
         playwright = {
           disabled = true;
+          args = [
+            "--isolated"
+          ];
           command = "${pkgs.playwright-mcp}/bin/playwright-mcp";
-        };
-        workiq = {
-          disabled = true;
-          args = [ "mcp" ];
-          command = "${inputs.workiq-mcp.packages.x86_64-linux.default}/bin/workiq";
         };
       };
     };
@@ -166,12 +145,6 @@
           autopairs = {
             nvim-autopairs = {
               enable = true;
-            };
-          };
-          extraPlugins = {
-            opencode-nvim = {
-              package = pkgs.vimPlugins.opencode-nvim;
-              setup = builtins.readFile ./nvf/opencode.lua;
             };
           };
           languages = {
@@ -274,15 +247,6 @@
         identitiesOnly = true;
         identityFile = "/run/secrets/ssh-azure-devops";
       };
-    };
-
-    tmux = {
-      enable = true;
-      baseIndex = 1;
-      escapeTime = 0;
-      keyMode = "vi";
-      mouse = true;
-      shortcut = "a";
     };
   };
 

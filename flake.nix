@@ -4,10 +4,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
       url = "github:jozef833/azure-devops-mcp";
     };
-    azure-mcp = {
-      inputs.nixpkgs.follows = "nixpkgs";
-      url = "github:jozef833/azure-mcp";
-    };
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
     };
@@ -18,10 +14,6 @@
     home-manager = {
       inputs.nixpkgs.follows = "nixpkgs";
       url = "github:nix-community/home-manager";
-    };
-    m365-mcp = {
-      inputs.nixpkgs.follows = "nixpkgs";
-      url = "github:jozef833/m365-mcp";
     };
     nixos-wsl = {
       inputs.nixpkgs.follows = "nixpkgs";
@@ -37,10 +29,6 @@
     sops-nix = {
       inputs.nixpkgs.follows = "nixpkgs";
       url = "github:Mic92/sops-nix";
-    };
-    workiq-mcp = {
-      inputs.nixpkgs.follows = "nixpkgs";
-      url = "github:Jozef833/workiq-mcp";
     };
   };
 
@@ -119,7 +107,10 @@
             '';
           };
 
+          formatter = pkgs.nixfmt;
+
           pre-commit.settings.hooks = {
+            actionlint.enable = true;
             deadnix.enable = true;
             nixfmt.enable = true;
             statix.enable = true;
