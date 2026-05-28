@@ -4,6 +4,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
       url = "github:jozef833/azure-devops-mcp";
     };
+    charmbracelet = {
+      inputs.nixpkgs.follows = "nixpkgs";
+      url = "github:charmbracelet/nur";
+    };
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
     };
@@ -28,7 +32,11 @@
     };
     sops-nix = {
       inputs.nixpkgs.follows = "nixpkgs";
-      url = "github:Mic92/sops-nix";
+      url = "github:mic92/sops-nix";
+    };
+    superpowers = {
+      flake = false;
+      url = "github:obra/superpowers";
     };
   };
 

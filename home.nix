@@ -1,5 +1,7 @@
 {
+  config,
   inputs,
+  lib,
   osConfig,
   pkgs,
   ...
@@ -7,6 +9,7 @@
 
 {
   imports = [
+    inputs.charmbracelet.homeModules.crush
     inputs.nvf.homeManagerModules.default
   ];
 
@@ -20,6 +23,9 @@
     ];
     file.".ssh/allowed_signers".text =
       "172046463+Jozef833@users.noreply.github.com " + builtins.readFile ./keys/ssh-github.pub;
+    sessionVariables = {
+      OPENCODE_EXPERIMENTAL = true;
+    };
     shellAliases = {
       lg = "lazygit";
       ls = "eza";
@@ -44,6 +50,37 @@
         };
         includeCoAuthoredBy = false;
         theme = "dark";
+      };
+    };
+
+    crush = {
+      #enable = true;
+      settings = {
+        mcp = lib.mapAttrs (_name: srv: {
+          disabled = srv.disabled or false;
+          args = srv.args or null;
+          command = srv.command or null;
+          type = if srv ? url && srv.url != null then "http" else "stdio";
+          url = srv.url or null;
+        }) config.programs.mcp.servers;
+        options = {
+          attribution = {
+            generated_with = false;
+            trailer_style = "none";
+          };
+          disable_metrics = true;
+          disabled_skills = [
+            "crush-config"
+            "crush-hooks"
+            "jq"
+          ];
+        };
+        providers = {
+          anthropic = {
+            api_key = "$(cat /run/secrets/anthropic-api-key)";
+            models = [ ];
+          };
+        };
       };
     };
 
@@ -230,6 +267,17 @@
       enableMcpIntegration = true;
       settings = {
         autoupdate = false;
+        lsp = true;
+        plugin = [
+          "superpowers@git+https://github.com/obra/superpowers.git#${inputs.superpowers.rev}"
+        ];
+        provider = {
+          anthropic = {
+            options = {
+              apiKey = "{file:/run/secrets/anthropic-api-key}";
+            };
+          };
+        };
         share = "disabled";
       };
     };
@@ -237,15 +285,17 @@
     ssh = {
       enable = true;
       enableDefaultConfig = false;
-      matchBlocks."github.com" = {
-        addKeysToAgent = "yes";
-        identitiesOnly = true;
-        identityFile = "/run/secrets/ssh-github";
-      };
-      matchBlocks."ssh.dev.azure.com" = {
-        addKeysToAgent = "yes";
-        identitiesOnly = true;
-        identityFile = "/run/secrets/ssh-azure-devops";
+      settings = {
+        "github.com" = {
+          AddKeysToAgent = "yes";
+          IdentitiesOnly = true;
+          IdentityFile = "/run/secrets/ssh-github";
+        };
+        "ssh.dev.azure.com" = {
+          AddKeysToAgent = "yes";
+          IdentitiesOnly = true;
+          IdentityFile = "/run/secrets/ssh-azure-devops";
+        };
       };
     };
   };
