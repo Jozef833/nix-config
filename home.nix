@@ -23,9 +23,6 @@
     ];
     file.".ssh/allowed_signers".text =
       "172046463+Jozef833@users.noreply.github.com " + builtins.readFile ./keys/ssh-github.pub;
-    sessionVariables = {
-      OPENCODE_EXPERIMENTAL = true;
-    };
     shellAliases = {
       lg = "lazygit";
       ls = "eza";
