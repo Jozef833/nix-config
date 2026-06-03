@@ -228,6 +228,9 @@
         autoupdate = false;
         lsp = true;
         permission = {
+          bash = {
+            "find /*" = "deny";
+          };
           skill = {
             customize-opencode = "deny";
           };
