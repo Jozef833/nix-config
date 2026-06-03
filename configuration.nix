@@ -89,8 +89,6 @@
         pkg:
         builtins.elem (lib.getName pkg) [
           "claude-code"
-          "crush"
-          "postman"
         ];
     };
   };

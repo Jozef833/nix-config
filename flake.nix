@@ -4,10 +4,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
       url = "github:jozef833/azure-devops-mcp";
     };
-    charmbracelet = {
-      inputs.nixpkgs.follows = "nixpkgs";
-      url = "github:charmbracelet/nur";
-    };
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
     };

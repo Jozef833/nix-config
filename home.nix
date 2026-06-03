@@ -1,7 +1,5 @@
 {
-  config,
   inputs,
-  lib,
   osConfig,
   pkgs,
   ...
@@ -9,15 +7,14 @@
 
 {
   imports = [
-    inputs.charmbracelet.homeModules.crush
     inputs.nvf.homeManagerModules.default
   ];
 
   home = {
     packages = with pkgs; [
+      devenv
       eza
       nerd-fonts.jetbrains-mono
-      postman
       ripgrep
       wl-clipboard
     ];
@@ -47,37 +44,6 @@
         };
         includeCoAuthoredBy = false;
         theme = "dark";
-      };
-    };
-
-    crush = {
-      #enable = true;
-      settings = {
-        mcp = lib.mapAttrs (_name: srv: {
-          disabled = srv.disabled or false;
-          args = srv.args or null;
-          command = srv.command or null;
-          type = if srv ? url && srv.url != null then "http" else "stdio";
-          url = srv.url or null;
-        }) config.programs.mcp.servers;
-        options = {
-          attribution = {
-            generated_with = false;
-            trailer_style = "none";
-          };
-          disable_metrics = true;
-          disabled_skills = [
-            "crush-config"
-            "crush-hooks"
-            "jq"
-          ];
-        };
-        providers = {
-          anthropic = {
-            api_key = "$(cat /run/secrets/anthropic-api-key)";
-            models = [ ];
-          };
-        };
       };
     };
 
@@ -155,10 +121,6 @@
         exa = {
           disabled = true;
           url = "https://mcp.exa.ai/mcp";
-        };
-        github_grep = {
-          disabled = true;
-          url = "https://mcp.grep.app";
         };
         playwright = {
           disabled = true;
@@ -265,6 +227,11 @@
       settings = {
         autoupdate = false;
         lsp = true;
+        permission = {
+          skill = {
+            customize-opencode = "deny";
+          };
+        };
         plugin = [
           "superpowers@git+https://github.com/obra/superpowers.git#${inputs.superpowers.rev}"
         ];
