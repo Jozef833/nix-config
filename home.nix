@@ -38,12 +38,31 @@
       enableMcpIntegration = true;
       settings = {
         apiKeyHelper = "cat /run/secrets/anthropic-api-key";
-        defaultMode = "acceptEdits";
+        attribution = {
+          commit = "";
+          pr = "";
+        };
+        autoMemoryEnabled = false;
+        disableDeepLinkRegistration = "disable";
+        editorMode = "vim";
         env = {
           CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = 1;
+          CLAUDE_CODE_NO_FLICKER = 1;
+          DISABLE_EXTRA_USAGE_COMMAND = 1;
+          DISABLE_INSTALL_GITHUB_APP_COMMAND = 1;
+          DISABLE_INSTALLATION_CHECKS = 1;
+          DISABLE_LOGIN_COMMAND = 1;
+          DISABLE_LOGOUT_COMMAND = 1;
         };
-        includeCoAuthoredBy = false;
+        permissions = {
+          defaultMode = "auto";
+          deny = [
+            "Bash(find /*)"
+          ];
+        };
+        showThinkingSummaries = true;
         theme = "dark";
+        workflowKeywordTriggerEnabled = false;
       };
     };
 
