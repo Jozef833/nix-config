@@ -1,124 +1,35 @@
+# DO-NOT-EDIT. This file was auto-generated using github:vic/flake-file.
+# Use `nix run .#write-flake` to regenerate it.
 {
+  outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } (inputs.import-tree ./modules);
+
   inputs = {
-    azure-devops-mcp = {
-      inputs.nixpkgs.follows = "nixpkgs";
-      url = "github:jozef833/azure-devops-mcp";
-    };
+    flake-file.url = "github:vic/flake-file";
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
     };
     git-hooks-nix = {
-      inputs.nixpkgs.follows = "nixpkgs";
       url = "github:cachix/git-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
-      inputs.nixpkgs.follows = "nixpkgs";
       url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
+    import-tree.url = "github:vic/import-tree";
     nixos-wsl = {
-      inputs.nixpkgs.follows = "nixpkgs";
       url = "github:nix-community/nixos-wsl";
-    };
-    nixpkgs = {
-      url = "github:nixos/nixpkgs/nixos-unstable";
-    };
-    nvf = {
       inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nvf = {
       url = "github:notashelf/nvf";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     sops-nix = {
-      inputs.nixpkgs.follows = "nixpkgs";
       url = "github:mic92/sops-nix";
-    };
-    superpowers = {
-      flake = false;
-      url = "github:obra/superpowers";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-
-  outputs =
-    inputs@{
-      flake-parts,
-      home-manager,
-      nixos-wsl,
-      nixpkgs,
-      sops-nix,
-      ...
-    }:
-    let
-      hostname = "nixos";
-      # This value determines the NixOS release from which the default
-      # settings for stateful data, like file locations and database versions
-      # on your system were taken. It's perfectly fine and recommended to leave
-      # this value at the release version of the first install of this system.
-      # Before changing this value read the documentation for this option
-      # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-      stateVersion = "25.05"; # Did you read the comment?
-      system = "x86_64-linux";
-      username = "nixos";
-    in
-    flake-parts.lib.mkFlake { inherit inputs; } {
-      imports = [
-        inputs.git-hooks-nix.flakeModule
-      ];
-
-      systems = [ system ];
-
-      flake = {
-        nixosConfigurations.${hostname} = nixpkgs.lib.nixosSystem {
-          modules = [
-            ./configuration.nix
-
-            home-manager.nixosModules.home-manager
-            {
-              home-manager = {
-                extraSpecialArgs = {
-                  inherit inputs;
-                };
-                useGlobalPkgs = true;
-                useUserPackages = true;
-                users = {
-                  ${username} = ./home.nix;
-                };
-              };
-            }
-
-            nixos-wsl.nixosModules.default
-
-            sops-nix.nixosModules.sops
-          ];
-
-          specialArgs = {
-            inherit
-              hostname
-              inputs
-              stateVersion
-              username
-              ;
-          };
-
-          inherit system;
-        };
-      };
-
-      perSystem =
-        { config, pkgs, ... }:
-        {
-          devShells.default = pkgs.mkShell {
-            packages = config.pre-commit.settings.enabledPackages;
-            shellHook = ''
-              ${config.pre-commit.shellHook}
-            '';
-          };
-
-          formatter = pkgs.nixfmt;
-
-          pre-commit.settings.hooks = {
-            actionlint.enable = true;
-            deadnix.enable = true;
-            nixfmt.enable = true;
-            statix.enable = true;
-          };
-        };
-    };
 }
