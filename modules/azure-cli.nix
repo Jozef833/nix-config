@@ -19,7 +19,7 @@ _: {
         ];
         postBuild = ''
           wrapProgram $out/bin/az \
-            --set AZURE_CORE_COLLECT_TELEMETRY 0
+            --set AZURE_CORE_COLLECT_TELEMETRY 0 \
             --set-default REQUESTS_CA_BUNDLE /etc/ssl/certs/ca-certificates.crt
         '';
       };
