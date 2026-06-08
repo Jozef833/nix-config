@@ -5,6 +5,19 @@
   ...
 }:
 
+let
+  azure-cli-wrapped = pkgs.symlinkJoin {
+    name = "azure-cli-wrapped";
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    paths = [
+      (pkgs.azure-cli.withExtensions [ pkgs.azure-cli.extensions.azure-devops ])
+    ];
+    postBuild = ''
+      wrapProgram $out/bin/az \
+        --set-default REQUESTS_CA_BUNDLE /etc/ssl/certs/ca-certificates.crt
+    '';
+  };
+in
 {
   imports = [
     inputs.nvf.homeManagerModules.default
@@ -12,6 +25,7 @@
 
   home = {
     packages = with pkgs; [
+      azure-cli-wrapped
       devenv
       eza
       nerd-fonts.jetbrains-mono

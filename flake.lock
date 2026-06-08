@@ -9,11 +9,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779104647,
-        "narHash": "sha256-aFDE9fINYuvRoWh7JQ+7IoBVqSPODH+h6uswQmjK+to=",
+        "lastModified": 1780674773,
+        "narHash": "sha256-Wce/6I7IIikawhbBYnjvUUUfeIc2n1E1r3e759cJ95U=",
         "owner": "jozef833",
         "repo": "azure-devops-mcp",
-        "rev": "6df3db43b311b6dae9ba449f24c17d4f4f7d2e16",
+        "rev": "1813ded6d9675caf02e404d554a5f1d509ef4c1d",
         "type": "github"
       },
       "original": {
@@ -367,11 +367,11 @@
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1780511420,
-        "narHash": "sha256-Ib44d47GTijSfCtcxFDliP3C9uUiLDYaAE/nVH8TQoY=",
+        "lastModified": 1780650009,
+        "narHash": "sha256-zUN3BFopCC9J7g8cQO69s93EKCKApSwRlLWMC2bI+GY=",
         "owner": "notashelf",
         "repo": "nvf",
-        "rev": "29f7eb8491d9833ee55006ab11169130a60c2652",
+        "rev": "0b92b1783de48499303fc6e61478da34ee124482",
         "type": "github"
       },
       "original": {
