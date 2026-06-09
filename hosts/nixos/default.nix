@@ -5,6 +5,7 @@ let
     bash
     claude-code
     direnv
+    eilmeldung
     gh
     git
     home
