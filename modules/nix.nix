@@ -15,6 +15,10 @@ _: {
               "nix-command"
             ];
           };
+          trustedUsers = [
+            "root"
+            "@wheel"
+          ];
         } config.my.nix.overrides;
       };
     };
