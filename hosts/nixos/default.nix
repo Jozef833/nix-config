@@ -14,6 +14,7 @@ let
     mcp
     nvf
     opencode
+    secretspec
     ssh
   ];
 in
@@ -174,7 +175,7 @@ in
                               exclude = [ "enabled" ];
                               extraTransforms = [ lib.hm.mcp.addType ];
                             }
-                          ) (lib.getAttrs [ "atlassian" "playwright" ] config.programs.mcp.servers);
+                          ) (lib.getAttrs [ "atlassian" "exa" "playwright" ] config.programs.mcp.servers);
                           settings = {
                             apiKeyHelper = "cat /run/secrets/anthropic-api-key";
                             env = {
@@ -214,6 +215,10 @@ in
                             };
                           };
                         };
+                      };
+
+                      secretspec = {
+                        provider = "dotenv";
                       };
 
                       ssh = {
