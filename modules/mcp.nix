@@ -21,10 +21,6 @@ _: {
                 disabled = true;
                 url = "https://mcp.exa.ai/mcp";
               };
-              github_grep = {
-                disabled = true;
-                url = "https://mcp.grep.app";
-              };
               playwright = {
                 disabled = true;
                 args = [ "--isolated" ];

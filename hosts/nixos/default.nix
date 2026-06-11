@@ -137,7 +137,9 @@ in
             users = {
               ${config.my.nixos.primaryUser} =
                 {
+                  config,
                   inputs,
+                  lib,
                   pkgs,
                   ...
                 }:
@@ -165,6 +167,14 @@ in
 
                       claude-code = {
                         overrides = {
+                          mcpServers = lib.mapAttrs (
+                            _name: server:
+                            lib.hm.mcp.transformMcpServer {
+                              inherit server;
+                              exclude = [ "enabled" ];
+                              extraTransforms = [ lib.hm.mcp.addType ];
+                            }
+                          ) (lib.getAttrs [ "atlassian" "playwright" ] config.programs.mcp.servers);
                           settings = {
                             apiKeyHelper = "cat /run/secrets/anthropic-api-key";
                             env = {

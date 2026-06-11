@@ -11,7 +11,6 @@ _: {
         programs = {
           claude-code = lib.recursiveUpdate {
             enable = true;
-            enableMcpIntegration = true;
             settings = {
               attribution = {
                 commit = "";
