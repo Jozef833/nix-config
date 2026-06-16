@@ -14,11 +14,11 @@ _: {
               "flakes"
               "nix-command"
             ];
+            trusted-users = [
+              "root"
+              "@wheel"
+            ];
           };
-          trustedUsers = [
-            "root"
-            "@wheel"
-          ];
         } config.my.nix.overrides;
       };
     };
