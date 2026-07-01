@@ -189,7 +189,7 @@ in
                               exclude = [ "enabled" ];
                               extraTransforms = [ lib.hm.mcp.addType ];
                             }
-                          ) (lib.getAttrs [ "atlassian" "exa" "playwright" ] config.programs.mcp.servers);
+                          ) (lib.getAttrs [ "atlassian" "chrome-devtools" "exa" ] config.programs.mcp.servers);
                           settings = {
                             apiKeyHelper = "cat /run/secrets/anthropic-api-key";
                             env = {
