@@ -26,11 +26,7 @@ _: {
                 };
               };
               autoupdate = false;
-              lsp = true;
               permission = {
-                bash = {
-                  "find /*" = "deny";
-                };
                 external_directory = {
                   "/nix/**" = "allow";
                 };

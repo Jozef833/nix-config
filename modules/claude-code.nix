@@ -21,17 +21,15 @@ _: {
               editorMode = "vim";
               env = {
                 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = 1;
+                CLAUDE_CODE_DISABLE_OFFICIAL_MARKETPLACE_AUTOINSTALL = 1;
                 CLAUDE_CODE_NO_FLICKER = 1;
                 DISABLE_EXTRA_USAGE_COMMAND = 1;
                 DISABLE_INSTALL_GITHUB_APP_COMMAND = 1;
-                DISABLE_INSTALLATION_CHECKS = 1;
               };
               permissions = {
                 defaultMode = "auto";
-                deny = [
-                  "Bash(find /*)"
-                ];
               };
+              lspRecommendationDisabled = true;
               showThinkingSummaries = true;
               theme = "dark";
               workflowKeywordTriggerEnabled = false;

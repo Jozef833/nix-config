@@ -5,12 +5,13 @@ let
     bash
     claude-code
     direnv
-    eilmeldung
+    #eilmeldung
     gh
     git
+    github-copilot-cli
     home
     lazygit
-    librewolf
+    #librewolf
     mcp
     nvf
     opencode
@@ -33,6 +34,18 @@ in
           };
 
           fileSystems = {
+            "/mnt/h" = {
+              device = "H:";
+              fsType = "drvfs";
+              options = [
+                "uid=1000"
+                "gid=100"
+                "nofail" # don't block boot if share is unreachable
+                "x-systemd.automount" # mount on first access, not at boot
+                "x-systemd.idle-timeout=60"
+              ];
+            };
+
             "/mnt/network/o" = {
               device = "//milw-isilon-prod-smb.milliman.com/milwh-users$/jozef.porubcin";
               fsType = "cifs";
@@ -99,6 +112,7 @@ in
                     pkg:
                     builtins.elem (lib.getName pkg) [
                       "claude-code"
+                      "github-copilot-cli"
                     ];
                 };
               };

@@ -12,6 +12,9 @@ _: {
           containers = {
             containersConf = {
               settings = {
+                containers = {
+                  log_driver = "json-file";
+                };
                 engine = {
                   cgroup_manager = "cgroupfs";
                   events_logger = "file";
