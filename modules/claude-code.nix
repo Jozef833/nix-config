@@ -27,10 +27,11 @@ _: {
                 DISABLE_INSTALL_GITHUB_APP_COMMAND = 1;
               };
               permissions = {
-                defaultMode = "auto";
+                defaultMode = "bypassPermissions";
               };
               lspRecommendationDisabled = true;
               showThinkingSummaries = true;
+              skipDangerousModePermissionPrompt = true;
               theme = "dark";
               workflowKeywordTriggerEnabled = false;
             };

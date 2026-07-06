@@ -17,6 +17,7 @@ let
     opencode
     secretspec
     ssh
+    ungoogled-chromium
   ];
 in
 {

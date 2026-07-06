@@ -21,7 +21,7 @@ _: {
               chrome-devtools = {
                 disabled = true;
                 args = [
-                  "--executable-path=${pkgs.chromium}/bin/chromium"
+                  "--executable-path=${config.programs.chromium.finalPackage}/bin/chromium"
                   "--isolated"
                   "--no-performance-crux"
                   "--no-usage-statistics"
