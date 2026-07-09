@@ -8,11 +8,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782134625,
-        "narHash": "sha256-Vq9csWjOMjhDdQWGXdaij2CpWS+4q+Q2Fkki1Rww9S4=",
+        "lastModified": 1783395238,
+        "narHash": "sha256-K2TqqPo9tVm876IJDXaq19hYPrZZqQd2SeG0t/GZuHE=",
         "owner": "christo-auer",
         "repo": "eilmeldung",
-        "rev": "d0213251e0883eca61411f9c2853f0de2e42d5ab",
+        "rev": "8da7cca72f3c250049cee8eb1e5ab95a0a94be00",
         "type": "github"
       },
       "original": {
@@ -150,11 +150,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783222121,
-        "narHash": "sha256-E/ElL373TO8lQ2aMvYyzN+k4xkVaUGoRqoa8AtM71tI=",
+        "lastModified": 1783550008,
+        "narHash": "sha256-qbbZUk9IG9dLNwCPwdPBs6I5clxwugRpP+1YU+GPK20=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "a1645f40777620c4bd2b6d854b290c2fc354a266",
+        "rev": "f4d01c1d87c7c2ec909549165d5a8338f1bd3315",
         "type": "github"
       },
       "original": {
@@ -239,11 +239,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783282377,
-        "narHash": "sha256-kw1sJ6WONc6lin/L81sB90fEtR9kxj/HN6RO++92vSI=",
+        "lastModified": 1783551490,
+        "narHash": "sha256-IgOE1Dh70GnGPWvrwiwUZkmzJURKM40oru0vvRPSu/M=",
         "owner": "notashelf",
         "repo": "nvf",
-        "rev": "5bd50f1b71686715737537fd363281b0b0123085",
+        "rev": "84af0c160f0c1c83179809277124f6dc4712b2b3",
         "type": "github"
       },
       "original": {
