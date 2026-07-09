@@ -37,6 +37,16 @@ _: {
                 disabled = true;
                 url = "https://mcp.exa.ai/mcp";
               };
+              m365 = {
+                disabled = true;
+                command = "${
+                  inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.cli-microsoft365-mcp-server
+                }/bin/cli-microsoft365-mcp-server";
+                env = {
+                  CLIMICROSOFT365_ENTRAAPPID = config.my.home.cli-microsoft365.entraAppId;
+                  CLIMICROSOFT365_TENANT = config.my.home.cli-microsoft365.entraTenantId;
+                };
+              };
               # playwright = {
               #   disabled = true;
               #   args = [ "--isolated" ];

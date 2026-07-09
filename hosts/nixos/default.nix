@@ -4,6 +4,7 @@ let
     azure-cli
     bash
     claude-code
+    cli-microsoft365
     direnv
     #eilmeldung
     gh
@@ -183,14 +184,24 @@ in
 
                       claude-code = {
                         overrides = {
-                          mcpServers = lib.mapAttrs (
-                            _name: server:
-                            lib.hm.mcp.transformMcpServer {
-                              inherit server;
-                              exclude = [ "enabled" ];
-                              extraTransforms = [ lib.hm.mcp.addType ];
-                            }
-                          ) (lib.getAttrs [ "atlassian" "chrome-devtools" "exa" ] config.programs.mcp.servers);
+                          mcpServers =
+                            lib.mapAttrs
+                              (
+                                _name: server:
+                                lib.hm.mcp.transformMcpServer {
+                                  inherit server;
+                                  exclude = [ "enabled" ];
+                                  extraTransforms = [ lib.hm.mcp.addType ];
+                                }
+                              )
+                              (
+                                lib.getAttrs [
+                                  "atlassian"
+                                  "chrome-devtools"
+                                  "exa"
+                                  "m365"
+                                ] config.programs.mcp.servers
+                              );
                           settings = {
                             apiKeyHelper = "cat /run/secrets/anthropic-api-key";
                             env = {
@@ -199,6 +210,11 @@ in
                             };
                           };
                         };
+                      };
+
+                      cli-microsoft365 = {
+                        entraAppId = "cb24f20f-b696-4030-9f95-82b06b399c70";
+                        entraTenantId = "e240d61e-61e3-4c9e-ab90-8644b2f4d2a9";
                       };
 
                       git = {
