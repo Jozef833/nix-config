@@ -6,13 +6,11 @@ let
     claude-code
     cli-microsoft365
     direnv
-    #eilmeldung
     gh
     git
     github-copilot-cli
     home
     lazygit
-    #librewolf
     mcp
     nvf
     opencode
@@ -197,9 +195,9 @@ in
                               (
                                 lib.getAttrs [
                                   "atlassian"
-                                  "chrome-devtools"
                                   "exa"
                                   "m365"
+                                  "playwright"
                                 ] config.programs.mcp.servers
                               );
                           settings = {
@@ -229,6 +227,16 @@ in
                             atlassian = {
                               disabled = true;
                               url = "https://mcp.atlassian.com/v1/mcp";
+                            };
+                            m365 = {
+                              disabled = true;
+                              command = "${
+                                inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.cli-microsoft365-mcp-server
+                              }/bin/cli-microsoft365-mcp-server";
+                              env = {
+                                CLIMICROSOFT365_ENTRAAPPID = config.my.home.cli-microsoft365.entraAppId;
+                                CLIMICROSOFT365_TENANT = config.my.home.cli-microsoft365.entraTenantId;
+                              };
                             };
                           };
                         };

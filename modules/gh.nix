@@ -1,6 +1,11 @@
 _: {
   flake.modules.homeManager.gh =
-    { config, lib, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     {
       options.my.home.gh.overrides = lib.mkOption {
         type = lib.types.attrs;
@@ -11,6 +16,7 @@ _: {
         programs = {
           gh = lib.recursiveUpdate {
             enable = true;
+            extensions = with pkgs; [ gh-stack ];
             gitCredentialHelper = {
               enable = false;
             };
