@@ -111,6 +111,8 @@ in
                   allowUnfreePredicate =
                     pkg:
                     builtins.elem (lib.getName pkg) [
+                      "acli"
+                      "acli-unwrapped"
                       "claude-code"
                       "github-copilot-cli"
                     ];
@@ -177,6 +179,7 @@ in
                   my = {
                     home = {
                       extras = with pkgs; [
+                        acli
                         wl-clipboard
                       ];
 
@@ -287,6 +290,7 @@ in
       )
     ]
     ++ (with config.flake.modules.nixos; [
+      atlas-refresh-jobs
       base
       podman
       wsl
