@@ -13,8 +13,6 @@ _: {
       user = config.my.nixos.primaryUser;
       repoPath = "/home/${user}/Documents/personal/repositories/Project-Atlas";
 
-      publishRoot = "/mnt/t/AI";
-
       cliMicrosoft365 = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.cli-microsoft365;
 
       mkRefreshScript =
@@ -36,7 +34,7 @@ _: {
           ];
 
       elmRefreshScript = mkRefreshScript "atlas-elm-refresh" "project-scout/elm" [
-        "pwsh -NoProfile -NonInteractive -File scripts/Invoke-ElmRefresh.ps1 -Publish -PublishRoot ${publishRoot}"
+        "pwsh -NoProfile -NonInteractive -File scripts/Invoke-ElmRefresh.ps1 -Publish"
       ];
 
       mapRefreshScript = mkRefreshScript "atlas-map-refresh" "project-scout/map" [
@@ -56,12 +54,9 @@ _: {
           description,
           script,
           path ? [ ],
-          requiresMount ? false,
         }:
         {
           inherit description path;
-          wants = lib.optionals requiresMount [ "mnt-t.automount" ];
-          after = lib.optionals requiresMount [ "mnt-t.automount" ];
           serviceConfig = {
             Type = "oneshot";
             User = user;
@@ -99,9 +94,8 @@ _: {
             };
 
             atlas-elm-refresh = mkService {
-              description = "Project Atlas: refresh ELM DuckDB and publish";
+              description = "Project Atlas: refresh ELM DuckDB and publish to blob";
               script = elmRefreshScript;
-              requiresMount = true;
             };
 
             atlas-map-refresh = mkService {
