@@ -25,6 +25,20 @@ _: {
           ${lib.concatStringsSep "\n" commands}
         '';
 
+      clientListRefreshScript = mkRefreshScript "atlas-client-list-refresh" "atlas" [
+        "dotnet run --project src/Atlas.ClientList.Refresh --configuration Release"
+      ];
+
+      conflictChecksRefreshScript =
+        mkRefreshScript "atlas-conflict-checks-refresh" "project-scout/conflict-checks"
+          [
+            "uv run cck-refresh"
+          ];
+
+      elmRefreshScript = mkRefreshScript "atlas-elm-refresh" "project-scout/elm" [
+        "pwsh -NoProfile -NonInteractive -File scripts/Invoke-ElmRefresh.ps1 -Publish -PublishRoot ${publishRoot}"
+      ];
+
       mapRefreshScript = mkRefreshScript "atlas-map-refresh" "project-scout/map" [
         "pwsh -NoProfile -NonInteractive -File scripts/Invoke-MapRefresh.ps1 -UvTempPath /tmp/atlas-map-refresh"
         ''
@@ -35,20 +49,6 @@ _: {
             --account atlasdevdata \
             --container datasets \
             --name map.duckdb''
-      ];
-
-      elmRefreshScript = mkRefreshScript "atlas-elm-refresh" "project-scout/elm" [
-        "pwsh -NoProfile -NonInteractive -File scripts/Invoke-ElmRefresh.ps1 -Publish -PublishRoot ${publishRoot}"
-      ];
-
-      conflictChecksRefreshScript =
-        mkRefreshScript "atlas-conflict-checks-refresh" "project-scout/conflict-checks"
-          [
-            "uv run cck-refresh"
-          ];
-
-      clientListRefreshScript = mkRefreshScript "atlas-client-list-refresh" "atlas" [
-        "dotnet run --project src/Atlas.ClientList.Refresh --configuration Release"
       ];
 
       mkService =
@@ -88,10 +88,14 @@ _: {
       config = {
         systemd = lib.recursiveUpdate {
           services = {
-            atlas-map-refresh = mkService {
-              description = "Project Atlas: refresh MAP DuckDB and publish to blob";
-              script = mapRefreshScript;
-              path = [ cliMicrosoft365 ];
+            atlas-client-list-refresh = mkService {
+              description = "Project Atlas: refresh client list replica and publish";
+              script = clientListRefreshScript;
+            };
+
+            atlas-conflict-checks-refresh = mkService {
+              description = "Project Atlas: refresh conflict checks and publish";
+              script = conflictChecksRefreshScript;
             };
 
             atlas-elm-refresh = mkService {
@@ -100,22 +104,18 @@ _: {
               requiresMount = true;
             };
 
-            atlas-conflict-checks-refresh = mkService {
-              description = "Project Atlas: refresh conflict checks and publish";
-              script = conflictChecksRefreshScript;
-            };
-
-            atlas-client-list-refresh = mkService {
-              description = "Project Atlas: refresh client list replica and publish";
-              script = clientListRefreshScript;
+            atlas-map-refresh = mkService {
+              description = "Project Atlas: refresh MAP DuckDB and publish to blob";
+              script = mapRefreshScript;
+              path = [ cliMicrosoft365 ];
             };
           };
 
           timers = {
+            atlas-client-list-refresh = mkTimer "00:00:00";
+            atlas-conflict-checks-refresh = mkTimer "00:00:00";
+            atlas-elm-refresh = mkTimer "00:00:00";
             atlas-map-refresh = mkTimer "00:00:00";
-            atlas-elm-refresh = mkTimer "00:05:00";
-            atlas-conflict-checks-refresh = mkTimer "00:10:00";
-            atlas-client-list-refresh = mkTimer "00:15:00";
           };
         } cfg.overrides;
       };
