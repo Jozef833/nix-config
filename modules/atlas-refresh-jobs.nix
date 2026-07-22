@@ -54,9 +54,10 @@ _: {
           description,
           script,
           path ? [ ],
+          environment ? { },
         }:
         {
-          inherit description path;
+          inherit description path environment;
           serviceConfig = {
             Type = "oneshot";
             User = user;
@@ -96,6 +97,9 @@ _: {
             atlas-elm-refresh = mkService {
               description = "Project Atlas: refresh ELM DuckDB and publish to blob";
               script = elmRefreshScript;
+              environment = {
+                ELM_AGILOFT_PASSWORD_FILE = config.sops.secrets.atlas-elm-password.path;
+              };
             };
 
             atlas-map-refresh = mkService {

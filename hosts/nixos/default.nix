@@ -127,6 +127,9 @@ in
                 "anthropic-api-key" = {
                   owner = config.my.nixos.primaryUser;
                 };
+                "atlas-elm-password" = {
+                  owner = config.my.nixos.primaryUser;
+                };
                 "samba-credentials" = {
                   owner = "root";
                 };
