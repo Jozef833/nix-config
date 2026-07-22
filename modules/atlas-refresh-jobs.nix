@@ -60,9 +60,8 @@ _: {
         }:
         {
           inherit description path;
-          unitConfig = lib.optionalAttrs requiresMount {
-            RequiresMountsFor = [ "/mnt/t" ];
-          };
+          wants = lib.optionals requiresMount [ "mnt-t.automount" ];
+          after = lib.optionals requiresMount [ "mnt-t.automount" ];
           serviceConfig = {
             Type = "oneshot";
             User = user;
