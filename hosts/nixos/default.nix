@@ -130,6 +130,9 @@ in
                 "atlas-elm-password" = {
                   owner = config.my.nixos.primaryUser;
                 };
+                "azure-foundry-api-key" = {
+                  owner = config.my.nixos.primaryUser;
+                };
                 "samba-credentials" = {
                   owner = "root";
                 };
@@ -164,6 +167,12 @@ in
                   ...
                 }:
                 let
+                  azureFoundryClaudeDeployments = [
+                    "claude-fable-5"
+                    "claude-haiku-4-5"
+                    "claude-opus-4-8"
+                    "claude-sonnet-5"
+                  ];
                   signingKey = "/run/secrets/ssh-github";
                 in
                 {
@@ -181,11 +190,6 @@ in
 
                   my = {
                     home = {
-                      extras = with pkgs; [
-                        acli
-                        wl-clipboard
-                      ];
-
                       claude-code = {
                         overrides = {
                           mcpServers =
@@ -221,6 +225,23 @@ in
                         entraTenantId = "e240d61e-61e3-4c9e-ab90-8644b2f4d2a9";
                       };
 
+                      extras = with pkgs; [
+                        acli
+                        (writeShellScriptBin "claude-foundry" ''
+                          set -euo pipefail
+                          export ANTHROPIC_DEFAULT_FABLE_MODEL="''${ANTHROPIC_DEFAULT_FABLE_MODEL:-claude-fable-5}"
+                          export ANTHROPIC_DEFAULT_HAIKU_MODEL="''${ANTHROPIC_DEFAULT_HAIKU_MODEL:-claude-haiku-4-5}"
+                          export ANTHROPIC_DEFAULT_OPUS_MODEL="''${ANTHROPIC_DEFAULT_OPUS_MODEL:-claude-opus-4-8}"
+                          export ANTHROPIC_DEFAULT_SONNET_MODEL="''${ANTHROPIC_DEFAULT_SONNET_MODEL:-claude-sonnet-5}"
+                          ANTHROPIC_FOUNDRY_API_KEY="$(cat /run/secrets/azure-foundry-api-key)"
+                          export ANTHROPIC_FOUNDRY_API_KEY
+                          export ANTHROPIC_FOUNDRY_BASE_URL="https://eastus2.api.cognitive.microsoft.com/anthropic"
+                          export CLAUDE_CODE_USE_FOUNDRY=1
+                          exec claude "$@"
+                        '')
+                        wl-clipboard
+                      ];
+
                       git = {
                         inherit signingKey;
                         userEmail = "172046463+Jozef833@users.noreply.github.com";
@@ -255,6 +276,61 @@ in
                               anthropic = {
                                 options = {
                                   apiKey = "{file:/run/secrets/anthropic-api-key}";
+                                };
+                              };
+                              "azure-foundry" = {
+                                models = lib.genAttrs azureFoundryClaudeDeployments (deployment: {
+                                  attachment = true;
+                                  name = deployment;
+                                  reasoning = true;
+                                  temperature = true;
+                                  tool_call = true;
+                                });
+                                name = "Azure Foundry (Anthropic)";
+                                npm = "@ai-sdk/anthropic";
+                                options = {
+                                  apiKey = "{file:/run/secrets/azure-foundry-api-key}";
+                                  baseURL = "https://eastus2.api.cognitive.microsoft.com/anthropic/v1";
+                                };
+                              };
+                              "azure-foundry-openai" = {
+                                models = {
+                                  "DeepSeek-V4-Pro" = {
+                                    attachment = false;
+                                    reasoning = true;
+                                    temperature = true;
+                                    tool_call = true;
+                                  };
+                                  "gpt-5.6-luna" = {
+                                    attachment = true;
+                                    reasoning = true;
+                                    temperature = true;
+                                    tool_call = true;
+                                  };
+                                  "gpt-5.6-sol" = {
+                                    attachment = true;
+                                    reasoning = true;
+                                    temperature = true;
+                                    tool_call = true;
+                                  };
+                                  "gpt-5.6-terra" = {
+                                    attachment = true;
+                                    reasoning = true;
+                                    temperature = true;
+                                    tool_call = true;
+                                  };
+                                  "model-router" = {
+                                    attachment = true;
+                                    reasoning = true;
+                                    temperature = true;
+                                    tool_call = true;
+                                  };
+                                };
+                                name = "Azure Foundry (OpenAI-compatible)";
+                                npm = "@ai-sdk/openai-compatible";
+                                options = {
+                                  apiKey = "{file:/run/secrets/azure-foundry-api-key}";
+                                  baseURL = "https://eastus2.api.cognitive.microsoft.com/openai/v1";
                                 };
                               };
                             };
