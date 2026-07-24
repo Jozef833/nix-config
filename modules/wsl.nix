@@ -29,29 +29,17 @@ _: {
             cifs-utils # CIFS/SMB mount support for network shares
             kmod # Provides modprobe/lsmod for kernel module management
             wget # Needed for VS Code WSL (along with nix-ld): https://nix-community.github.io/NixOS-WSL/how-to/vscode.html
-
-            # WSL has no native xdg-open, and wslu (which used to provide wslview)
-            # was discontinued and removed from nixpkgs. CLI tools that shell out
-            # to `xdg-open` to launch browser-based logins (acli, kubectl
-            # oidc-login, gcloud, etc.) fail with:
-            #   exec: "xdg-open": executable file not found in $PATH
-            #
-            # We use PowerShell's Start-Process, passed the URL via WSLENV
-            # rather than command-line interpolation, instead of the more
-            # commonly suggested `cmd.exe /c start` or `explorer.exe`:
-            #   - cmd.exe reinterprets `&` in the URL as a command separator,
-            #     silently truncating OAuth URLs (which are full of
-            #     `&`-separated query params).
-            #   - explorer.exe is unreliable for handing URIs to the default
-            #     browser; it sometimes just opens a plain Explorer window.
-            # Routing the URL through an env var instead of the command line
-            # sidesteps both cmd.exe's and PowerShell's quoting/escaping rules
-            # entirely.
             (writeShellScriptBin "xdg-open" ''
               export WSLENV="OPEN_URL:$WSLENV"
               export OPEN_URL="$1"
-              powershell.exe -NoProfile -NonInteractive -Command 'Start-Process $env:OPEN_URL' >/dev/null 2>&1
-              exit 0
+              if ! err=$(powershell.exe -NoProfile -NonInteractive -Command 'Start-Process $env:OPEN_URL' 2>&1 >/dev/null); then
+                status=$?
+                {
+                  echo "xdg-open: failed to open '$OPEN_URL' via powershell.exe (exit $status)."
+                  echo "$err"
+                } >&2
+                exit "$status"
+              fi
             '')
           ];
         };

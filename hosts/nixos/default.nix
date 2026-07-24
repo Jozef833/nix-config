@@ -111,7 +111,6 @@ in
                   allowUnfreePredicate =
                     pkg:
                     builtins.elem (lib.getName pkg) [
-                      "acli"
                       "acli-unwrapped"
                       "claude-code"
                       "github-copilot-cli"
@@ -226,7 +225,7 @@ in
                       };
 
                       extras = with pkgs; [
-                        acli
+                        acli.unwrapped
                         (writeShellScriptBin "claude-foundry" ''
                           set -euo pipefail
                           export ANTHROPIC_DEFAULT_FABLE_MODEL="''${ANTHROPIC_DEFAULT_FABLE_MODEL:-claude-fable-5}"
