@@ -13,10 +13,6 @@
 
   flake-file = {
     inputs = {
-      eilmeldung = {
-        url = lib.mkDefault "github:christo-auer/eilmeldung";
-        inputs.nixpkgs.follows = "nixpkgs";
-      };
       flake-file = {
         url = lib.mkDefault "github:vic/flake-file";
       };
