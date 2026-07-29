@@ -17,6 +17,7 @@ _: {
                 pr = "";
               };
               autoMemoryEnabled = false;
+              disableBundledSkills = true;
               disableDeepLinkRegistration = "disable";
               editorMode = "vim";
               env = {

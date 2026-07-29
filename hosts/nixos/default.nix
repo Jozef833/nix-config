@@ -254,6 +254,10 @@ in
                               disabled = true;
                               url = "https://mcp.atlassian.com/v1/mcp";
                             };
+                            context7 = {
+                              disabled = true;
+                              url = "https://mcp.context7.com/mcp";
+                            };
                             m365 = {
                               disabled = true;
                               command = "${
@@ -263,6 +267,10 @@ in
                                 CLIMICROSOFT365_ENTRAAPPID = config.my.home.cli-microsoft365.entraAppId;
                                 CLIMICROSOFT365_TENANT = config.my.home.cli-microsoft365.entraTenantId;
                               };
+                            };
+                            microsoft-learn = {
+                              disabled = true;
+                              url = "https://learn.microsoft.com/api/mcp";
                             };
                           };
                         };
