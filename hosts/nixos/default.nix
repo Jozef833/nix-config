@@ -46,6 +46,42 @@ in
               ];
             };
 
+            "/mnt/i" = {
+              device = "I:";
+              fsType = "drvfs";
+              options = [
+                "uid=1000"
+                "gid=100"
+                "nofail" # don't block boot if share is unreachable
+                "x-systemd.automount" # mount on first access, not at boot
+                "x-systemd.idle-timeout=60"
+              ];
+            };
+
+            "/mnt/l" = {
+              device = "L:";
+              fsType = "drvfs";
+              options = [
+                "uid=1000"
+                "gid=100"
+                "nofail" # don't block boot if share is unreachable
+                "x-systemd.automount" # mount on first access, not at boot
+                "x-systemd.idle-timeout=60"
+              ];
+            };
+
+            "/mnt/n" = {
+              device = "N:";
+              fsType = "drvfs";
+              options = [
+                "uid=1000"
+                "gid=100"
+                "nofail" # don't block boot if share is unreachable
+                "x-systemd.automount" # mount on first access, not at boot
+                "x-systemd.idle-timeout=60"
+              ];
+            };
+
             "/mnt/network/o" = {
               device = "//milw-isilon-prod-smb.milliman.com/milwh-users$/jozef.porubcin";
               fsType = "cifs";
@@ -56,6 +92,70 @@ in
                 "gid=100"
                 "file_mode=0600"
                 "dir_mode=0700"
+                "nofail" # don't block boot if share is unreachable
+                "x-systemd.automount" # mount on first access, not at boot
+                "x-systemd.idle-timeout=60"
+              ];
+            };
+
+            "/mnt/network/t/MISC" = {
+              device = "//milw-isilon-prod-smb.milliman.com/milwh-docs$/MISC";
+              fsType = "cifs";
+              options = [
+                "credentials=/run/secrets/samba-credentials"
+                "domain=milliman.com"
+                "uid=1000"
+                "gid=100"
+                "file_mode=0600"
+                "dir_mode=0700"
+                "nofail" # don't block boot if share is unreachable
+                "x-systemd.automount" # mount on first access, not at boot
+                "x-systemd.idle-timeout=60"
+              ];
+            };
+
+            "/mnt/o" = {
+              device = "O:";
+              fsType = "drvfs";
+              options = [
+                "uid=1000"
+                "gid=100"
+                "nofail" # don't block boot if share is unreachable
+                "x-systemd.automount" # mount on first access, not at boot
+                "x-systemd.idle-timeout=60"
+              ];
+            };
+
+            "/mnt/p" = {
+              device = "P:";
+              fsType = "drvfs";
+              options = [
+                "uid=1000"
+                "gid=100"
+                "nofail" # don't block boot if share is unreachable
+                "x-systemd.automount" # mount on first access, not at boot
+                "x-systemd.idle-timeout=60"
+              ];
+            };
+
+            "/mnt/q" = {
+              device = "Q:";
+              fsType = "drvfs";
+              options = [
+                "uid=1000"
+                "gid=100"
+                "nofail" # don't block boot if share is unreachable
+                "x-systemd.automount" # mount on first access, not at boot
+                "x-systemd.idle-timeout=60"
+              ];
+            };
+
+            "/mnt/s" = {
+              device = "S:";
+              fsType = "drvfs";
+              options = [
+                "uid=1000"
+                "gid=100"
                 "nofail" # don't block boot if share is unreachable
                 "x-systemd.automount" # mount on first access, not at boot
                 "x-systemd.idle-timeout=60"
@@ -74,16 +174,48 @@ in
               ];
             };
 
-            "/mnt/network/t/MISC" = {
-              device = "//milw-isilon-prod-smb.milliman.com/milwh-docs$/MISC";
-              fsType = "cifs";
+            "/mnt/u" = {
+              device = "U:";
+              fsType = "drvfs";
               options = [
-                "credentials=/run/secrets/samba-credentials"
-                "domain=milliman.com"
                 "uid=1000"
                 "gid=100"
-                "file_mode=0600"
-                "dir_mode=0700"
+                "nofail" # don't block boot if share is unreachable
+                "x-systemd.automount" # mount on first access, not at boot
+                "x-systemd.idle-timeout=60"
+              ];
+            };
+
+            "/mnt/v" = {
+              device = "V:";
+              fsType = "drvfs";
+              options = [
+                "uid=1000"
+                "gid=100"
+                "nofail" # don't block boot if share is unreachable
+                "x-systemd.automount" # mount on first access, not at boot
+                "x-systemd.idle-timeout=60"
+              ];
+            };
+
+            "/mnt/w" = {
+              device = "W:";
+              fsType = "drvfs";
+              options = [
+                "uid=1000"
+                "gid=100"
+                "nofail" # don't block boot if share is unreachable
+                "x-systemd.automount" # mount on first access, not at boot
+                "x-systemd.idle-timeout=60"
+              ];
+            };
+
+            "/mnt/x" = {
+              device = "X:";
+              fsType = "drvfs";
+              options = [
+                "uid=1000"
+                "gid=100"
                 "nofail" # don't block boot if share is unreachable
                 "x-systemd.automount" # mount on first access, not at boot
                 "x-systemd.idle-timeout=60"
