@@ -1,111 +1,88 @@
 package main
 
-import "strings"
-
 type Verdict struct {
 	Action  string `json:"action"`
-	Command string `json:"command,omitempty"`
 	Message string `json:"message,omitempty"`
-	Rule    string `json:"rule,omitempty"`
 }
 
-const wrapMarker = "__agent_policy_rc"
-
-func evaluate(pol *Policy, classes Classes, src, cwd string) Verdict {
-	// A command carrying the wrap marker is one of our own rewrites being
-	// re-issued; wrapping it again would nest budgets.
-	if strings.Contains(src, wrapMarker) {
-		return Verdict{Action: "allow"}
-	}
-	a := analyze(src, cwd)
+// evaluate applies the rules in order; the first that fires denies with its
+// message. Unparsable input is allowed (fail open): a policy engine that
+// wedges the agent is worse than a missed match.
+func evaluate(pol *Policy, src string) Verdict {
+	a := analyze(src)
 	if a.parseErr {
 		return Verdict{Action: "allow"}
 	}
-	var travs []*traversal
-	for _, cmd := range a.commands {
-		if t := traversalOf(cmd, classes); t != nil {
-			travs = append(travs, t)
+	for i := range pol.Rules {
+		if ruleFires(&pol.Rules[i], a) {
+			return Verdict{Action: "deny", Message: pol.Rules[i].Message}
 		}
-	}
-	for _, r := range pol.Rules {
-		switch r.Kind {
-		case "command":
-			for _, cmd := range a.commands {
-				if matchesAnyPrefix(cmd, r.Prefixes) {
-					return Verdict{Action: "deny", Message: r.Message, Rule: r.Name}
-				}
-			}
-		case "loop":
-			for _, loopCmds := range a.loops {
-				if loopMatches(loopCmds, r.All) {
-					return Verdict{Action: "deny", Message: r.Message, Rule: r.Name}
-				}
-			}
-		case "traversal":
-			for _, t := range travs {
-				if len(r.Commands) > 0 && !containsString(r.Commands, t.name) {
-					continue
-				}
-				for _, root := range t.roots {
-					if !root.known || root.class == "" ||
-						!containsString(r.Classes, root.class) {
-						continue
-					}
-					if r.Require == nil || !requireMet(r.Require, t, root) {
-						return Verdict{Action: "deny", Message: r.Message, Rule: r.Name}
-					}
-				}
-			}
-		}
-	}
-	if len(travs) > 0 {
-		return Verdict{Action: "budget"}
 	}
 	return Verdict{Action: "allow"}
 }
 
-func requireMet(req *Require, t *traversal, root rootInfo) bool {
-	if req.MaxDepth > 0 && (!t.hasDepth || t.maxDepth > req.MaxDepth) {
-		return false
-	}
-	if req.MinRootDepth > 0 && root.depth < req.MinRootDepth {
-		return false
-	}
-	if req.Pruned && !t.pruned {
-		return false
-	}
-	return true
-}
-
-func matchesAnyPrefix(cmd command, prefixes [][]string) bool {
-	for _, p := range prefixes {
-		if hasArgvPrefix(cmd, p) {
+func ruleFires(r *Rule, a *analysis) bool {
+	switch r.Scope {
+	case "command":
+		for i := range a.commands {
+			c := &a.commands[i]
+			if allSatisfiedBy(r.Match, c) && !anySatisfiedBy(r.Unless, c) {
+				return true
+			}
+		}
+	case "loop":
+		for _, group := range a.loops {
+			if covered(r.Match, group) && !anyInGroup(r.Unless, group) {
+				return true
+			}
+		}
+	case "script":
+		if covered(r.Match, a.commands) && !anyInGroup(r.Unless, a.commands) {
 			return true
 		}
 	}
 	return false
 }
 
-func hasArgvPrefix(cmd command, prefix []string) bool {
-	if len(prefix) == 0 || len(cmd.argv) < len(prefix) {
-		return false
+func satisfied(m *Matcher, c *subcmd) bool {
+	if len(m.Command) > 0 {
+		if !c.nameLit || !containsString(m.Command, c.name) {
+			return false
+		}
 	}
-	for i, want := range prefix {
-		if !cmd.argv[i].literal || cmd.argv[i].text != want {
+	for _, re := range m.argsRes {
+		if !re.MatchString(c.args) {
 			return false
 		}
 	}
 	return true
 }
 
-func loopMatches(cmds []command, groups [][][]string) bool {
-	if len(groups) == 0 {
-		return false
+func allSatisfiedBy(ms []Matcher, c *subcmd) bool {
+	for i := range ms {
+		if !satisfied(&ms[i], c) {
+			return false
+		}
 	}
-	for _, alts := range groups {
+	return true
+}
+
+func anySatisfiedBy(ms []Matcher, c *subcmd) bool {
+	for i := range ms {
+		if satisfied(&ms[i], c) {
+			return true
+		}
+	}
+	return false
+}
+
+// covered reports whether every matcher is satisfied by some command in the
+// group (different commands may satisfy different matchers).
+func covered(ms []Matcher, group []subcmd) bool {
+	for i := range ms {
 		found := false
-		for _, cmd := range cmds {
-			if matchesAnyPrefix(cmd, alts) {
+		for j := range group {
+			if satisfied(&ms[i], &group[j]) {
 				found = true
 				break
 			}
@@ -115,6 +92,17 @@ func loopMatches(cmds []command, groups [][][]string) bool {
 		}
 	}
 	return true
+}
+
+func anyInGroup(ms []Matcher, group []subcmd) bool {
+	for i := range ms {
+		for j := range group {
+			if satisfied(&ms[i], &group[j]) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func containsString(list []string, s string) bool {

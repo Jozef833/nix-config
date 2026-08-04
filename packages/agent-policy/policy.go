@@ -4,48 +4,60 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
+	"sort"
+	"strings"
 )
 
 type Policy struct {
-	Budget Budget `json:"budget"`
-	Rules  []Rule `json:"rules"`
+	Rules []Rule `json:"rules"`
 }
 
-type Budget struct {
-	Reflection     string `json:"reflection"`
-	TimeoutSeconds int    `json:"timeoutSeconds"`
-}
-
-// Rule kinds:
-//   - "command": deny when any simple command's argv starts with one of Prefixes
-//   - "loop": deny when a single loop body contains, for every group in All,
-//     a command matching one of that group's alternative argv prefixes
-//   - "traversal": applies to filesystem-walking commands whose search root
-//     falls in one of Classes; denies outright when Require is absent,
-//     otherwise denies when the requirements are unmet
+// Rule: deny with Message when every Match matcher is satisfied within Scope
+// and no Unless matcher is satisfied within that same scope.
+//
+// Scope controls how close together the matchers must co-occur:
+//   - "command": one simple command satisfies everything (default for a
+//     single matcher)
+//   - "loop": the commands of one loop body satisfy everything (default for
+//     multiple matchers: "script")
+//   - "script": commands anywhere in the submitted script
+//
+// A rule has no name: the matchers are its identity (duplicates are a load
+// error) and the message is its documentation.
 type Rule struct {
-	All      [][][]string `json:"all,omitempty"`
-	Classes  []string     `json:"classes,omitempty"`
-	Commands []string     `json:"commands,omitempty"`
-	Kind     string       `json:"kind"`
-	Message  string       `json:"message"`
-	Name     string       `json:"name"`
-	Prefixes [][]string   `json:"prefixes,omitempty"`
-	Require  *Require     `json:"require,omitempty"`
+	Match   []Matcher `json:"match"`
+	Message string    `json:"message"`
+	Scope   string    `json:"scope,omitempty"`
+	Unless  []Matcher `json:"unless,omitempty"`
 }
 
-type Require struct {
-	// MaxDepth: the command must state a depth bound of at most this value.
-	MaxDepth int `json:"maxDepth,omitempty"`
-	// MinRootDepth: the search root must sit at least this many path
-	// components below the class root.
-	MinRootDepth int `json:"minRootDepth,omitempty"`
-	// Pruned: find must bound its walk (-prune, -not -path, or -maxdepth).
-	Pruned bool `json:"pruned,omitempty"`
+// Matcher: Command matches argv[0] exactly (any of the listed names);
+// Args regexes (RE2) must all match the remaining argv joined with spaces.
+// Either field may be omitted, not both.
+type Matcher struct {
+	Args    StringList `json:"args,omitempty"`
+	Command StringList `json:"command,omitempty"`
+
+	argsRes []*regexp.Regexp
 }
 
-// Classes maps a class name to the filesystem roots it covers.
-type Classes map[string][]string
+// StringList accepts a JSON string or array of strings.
+type StringList []string
+
+func (s *StringList) UnmarshalJSON(data []byte) error {
+	var one string
+	if err := json.Unmarshal(data, &one); err == nil {
+		*s = []string{one}
+		return nil
+	}
+	var many []string
+	if err := json.Unmarshal(data, &many); err != nil {
+		return err
+	}
+	*s = many
+	return nil
+}
 
 func loadPolicy(path string) (*Policy, error) {
 	data, err := os.ReadFile(path)
@@ -56,17 +68,70 @@ func loadPolicy(path string) (*Policy, error) {
 	if err := json.Unmarshal(data, &pol); err != nil {
 		return nil, fmt.Errorf("parse policy %s: %w", path, err)
 	}
+	if err := pol.validate(); err != nil {
+		return nil, fmt.Errorf("invalid policy %s: %w", path, err)
+	}
 	return &pol, nil
 }
 
-func loadClasses(path string) (Classes, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("load classes: %w", err)
+func (p *Policy) validate() error {
+	seen := map[string]int{}
+	for i := range p.Rules {
+		r := &p.Rules[i]
+		if len(r.Match) == 0 {
+			return fmt.Errorf("rule %d: needs at least one match matcher", i+1)
+		}
+		if r.Message == "" {
+			return fmt.Errorf("rule %d: needs a message", i+1)
+		}
+		switch r.Scope {
+		case "":
+			if len(r.Match) == 1 {
+				r.Scope = "command"
+			} else {
+				r.Scope = "script"
+			}
+		case "command", "loop", "script":
+		default:
+			return fmt.Errorf("rule %d: unknown scope %q", i+1, r.Scope)
+		}
+		for _, set := range [][]Matcher{r.Match, r.Unless} {
+			for j := range set {
+				m := &set[j]
+				if len(m.Command) == 0 && len(m.Args) == 0 {
+					return fmt.Errorf("rule %d: matcher needs command or args", i+1)
+				}
+				for _, expr := range m.Args {
+					re, err := regexp.Compile(expr)
+					if err != nil {
+						return fmt.Errorf("rule %d: args regex %q: %w", i+1, expr, err)
+					}
+					m.argsRes = append(m.argsRes, re)
+				}
+			}
+		}
+		key := ruleKey(r)
+		if prev, dup := seen[key]; dup {
+			return fmt.Errorf("rules %d and %d are duplicates (same scope and matchers)", prev+1, i+1)
+		}
+		seen[key] = i
 	}
-	var classes Classes
-	if err := json.Unmarshal(data, &classes); err != nil {
-		return nil, fmt.Errorf("parse classes %s: %w", path, err)
+	return nil
+}
+
+func ruleKey(r *Rule) string {
+	return r.Scope + "|" + matcherSetKey(r.Match) + "||" + matcherSetKey(r.Unless)
+}
+
+func matcherSetKey(ms []Matcher) string {
+	keys := make([]string, len(ms))
+	for i, m := range ms {
+		cmds := append([]string(nil), m.Command...)
+		sort.Strings(cmds)
+		args := append([]string(nil), m.Args...)
+		sort.Strings(args)
+		keys[i] = strings.Join(cmds, ",") + "\x1f" + strings.Join(args, "\x1f")
 	}
-	return classes, nil
+	sort.Strings(keys)
+	return strings.Join(keys, "\x1e")
 }

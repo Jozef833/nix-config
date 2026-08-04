@@ -1,8 +1,0 @@
-{
-  "home": ["/home/nixos"],
-  "network": ["/mnt/h", "/mnt/network/o", "/mnt/network/t/MISC", "/mnt/t"],
-  "nix-store": ["/nix"],
-  "repos": ["/home/nixos/Documents/personal/repositories"],
-  "root": ["/"],
-  "windows": ["/mnt/c"]
-}

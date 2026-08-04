@@ -4,7 +4,6 @@ _: {
       config,
       inputs,
       lib,
-      osConfig,
       pkgs,
       ...
     }:
@@ -12,43 +11,21 @@ _: {
       package = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.agent-policy;
 
       settings = lib.recursiveUpdate {
-        classes = {
-          home = [ config.home.homeDirectory ];
-          # Slow drvfs/cifs mounts come straight from the host's fileSystems,
-          # so adding a mount teaches the policy about it automatically.
-          network = lib.attrNames (
-            lib.filterAttrs (
-              _mountPoint: fs:
-              builtins.elem fs.fsType [
-                "cifs"
-                "drvfs"
-              ]
-            ) osConfig.fileSystems
-          );
-          nix-store = [ "/nix" ];
-          repos = [ "${config.home.homeDirectory}/Documents/personal/repositories" ];
-          root = [ "/" ];
-          windows = [ "/mnt/c" ];
-        };
         policyFile = ../packages/agent-policy/policy.json;
       } config.my.home.agent-policy.overrides;
 
-      classesFile = pkgs.writeText "agent-policy-classes.json" (builtins.toJSON settings.classes);
-
-      engineFlags = "--policy ${settings.policyFile} --classes ${classesFile}";
-
       opencodePlugin = pkgs.writeText "agent-policy.js" ''
         const BIN = "${lib.getExe package}";
-        const FLAGS = ["--policy", "${settings.policyFile}", "--classes", "${classesFile}"];
+        const POLICY = "${settings.policyFile}";
 
-        export const AgentPolicy = async ({ directory }) => ({
+        export const AgentPolicy = async () => ({
           "tool.execute.before": async (input, output) => {
             let verdict;
             try {
               if (input.tool !== "bash") return;
               const cmd = output?.args?.command;
               if (typeof cmd !== "string" || cmd.length === 0) return;
-              const proc = Bun.spawnSync([BIN, "check", ...FLAGS, "--cwd", directory], {
+              const proc = Bun.spawnSync([BIN, "check", "--policy", POLICY], {
                 stdin: new TextEncoder().encode(cmd),
               });
               if (proc.exitCode !== 0) return;
@@ -58,9 +35,6 @@ _: {
             }
             if (verdict.action === "deny") {
               throw new Error(verdict.message);
-            }
-            if (verdict.action === "rewrite" && typeof verdict.command === "string") {
-              output.args.command = verdict.command;
             }
           },
         });
@@ -87,7 +61,7 @@ _: {
                     hooks = [
                       {
                         type = "command";
-                        command = "${lib.getExe package} claude-hook ${engineFlags}";
+                        command = "${lib.getExe package} claude-hook --policy ${settings.policyFile}";
                       }
                     ];
                   }
@@ -112,7 +86,7 @@ _: {
         { buildGoModule, lib }:
         buildGoModule {
           meta = {
-            description = "Bash policy engine for coding agents: teaching denials and budget rewrites for Claude Code and OpenCode";
+            description = "Bash policy engine for coding agents: teaching denials for Claude Code and OpenCode";
             license = lib.licenses.mit;
             mainProgram = "agent-policy";
           };

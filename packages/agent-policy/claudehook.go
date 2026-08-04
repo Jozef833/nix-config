@@ -8,25 +8,19 @@ import (
 
 type hookInput struct {
 	ToolName  string          `json:"tool_name"`
-	Cwd       string          `json:"cwd"`
 	ToolInput json.RawMessage `json:"tool_input"`
 }
 
 // runClaudeHook implements a Claude Code PreToolUse hook: it reads the hook
-// JSON on stdin and emits a permission decision on stdout. Denial reasons and
-// budget rewrites both feed back into the model's context.
+// JSON on stdin and, on a deny, emits a permission decision whose reason is
+// fed back to the model. Anything else produces no output (no decision).
 func runClaudeHook(args []string) error {
 	fs := flag.NewFlagSet("claude-hook", flag.ContinueOnError)
 	policyPath := fs.String("policy", "policy.json", "path to policy.json")
-	classesPath := fs.String("classes", "testdata/classes.json", "path to classes.json")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 	pol, err := loadPolicy(*policyPath)
-	if err != nil {
-		return err
-	}
-	classes, err := loadClasses(*classesPath)
 	if err != nil {
 		return err
 	}
@@ -43,31 +37,15 @@ func runClaudeHook(args []string) error {
 	if err := json.Unmarshal(in.ToolInput, &bash); err != nil || bash.Command == "" {
 		return nil
 	}
-	v := evaluate(pol, classes, bash.Command, in.Cwd)
-	enc := json.NewEncoder(os.Stdout)
-	switch v.Action {
-	case "deny":
-		return enc.Encode(map[string]any{
-			"hookSpecificOutput": map[string]any{
-				"hookEventName":            "PreToolUse",
-				"permissionDecision":       "deny",
-				"permissionDecisionReason": v.Message,
-			},
-		})
-	case "budget":
-		wrapped, err := wrapBudget(bash.Command, pol.Budget)
-		if err != nil {
-			return nil
-		}
-		return enc.Encode(map[string]any{
-			"hookSpecificOutput": map[string]any{
-				"hookEventName":      "PreToolUse",
-				"permissionDecision": "allow",
-				"updatedInput": map[string]any{
-					"command": wrapped,
-				},
-			},
-		})
+	v := evaluate(pol, bash.Command)
+	if v.Action != "deny" {
+		return nil
 	}
-	return nil
+	return json.NewEncoder(os.Stdout).Encode(map[string]any{
+		"hookSpecificOutput": map[string]any{
+			"hookEventName":            "PreToolUse",
+			"permissionDecision":       "deny",
+			"permissionDecisionReason": v.Message,
+		},
+	})
 }
