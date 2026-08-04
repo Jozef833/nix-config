@@ -47,6 +47,31 @@
   {
     "name": "sleep-then-single-check",
     "command": "sleep 30; gh run view 12345 --json status",
+    "expect": "deny"
+  },
+  {
+    "name": "sleep-then-pr-status-read",
+    "command": "sleep 180; for n in 114 115 116; do gh pr view $n --json statusCheckRollup; done",
+    "expect": "deny"
+  },
+  {
+    "name": "watch-pr-checks",
+    "command": "gh pr checks 114 --watch --fail-fast",
+    "expect": "allow"
+  },
+  {
+    "name": "watch-several-pr-checks-concurrently",
+    "command": "for n in 114 115 116; do gh pr checks $n --watch --fail-fast & done; wait",
+    "expect": "allow"
+  },
+  {
+    "name": "one-shot-status-read",
+    "command": "gh pr view 114 --json statusCheckRollup",
+    "expect": "allow"
+  },
+  {
+    "name": "sleep-then-non-ci-pr-read",
+    "command": "sleep 2; gh pr view 114 --json title,body",
     "expect": "allow"
   },
   {

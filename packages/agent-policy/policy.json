@@ -5,12 +5,16 @@
       "message": "agent-policy: this NixOS system is declarative. Use an ephemeral 'nix shell nixpkgs#<pkg> --command ...' for one-off needs."
     },
     {
-      "scope": "loop",
+      "scope": "script",
       "match": [
         { "command": "sleep" },
-        { "command": "gh", "args": "^run (view|list)( |$)" }
+        {
+          "command": "gh",
+          "args": "^(run (view|list)|pr (checks|status))( |$)|statusCheckRollup"
+        }
       ],
-      "message": "agent-policy: polling CI in a sleep loop wastes tokens and reinvents the wheel. Use: gh run watch <run-id> --exit-status"
+      "unless": [{ "args": "(^| )--watch( |$)" }],
+      "message": "agent-policy: sleeping before or between CI status reads guesses a duration and then burns tokens re-reading. Block on the real signal, which also sets the exit code: gh pr checks <pr> --watch --fail-fast, or gh run watch <run-id> --exit-status. For several PRs, watch them concurrently and wait: for n in 1 2 3; do gh pr checks $n --watch --fail-fast & done; wait"
     },
     {
       "match": [
