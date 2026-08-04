@@ -139,6 +139,22 @@
         "type": "github"
       }
     },
+    "milliman-timesheet-cli": {
+      "locked": {
+        "lastModified": 1785855580,
+        "narHash": "sha256-nWSIary9Os3bQmc/PtGYDCGXZzX3/RJ4IY6G3Go1GpM=",
+        "ref": "refs/tags/v0.1.0",
+        "rev": "34723347dfc375b8ed306854a4e8d084f16339e3",
+        "revCount": 9,
+        "type": "git",
+        "url": "ssh://git@github.com/Milliman-CMHH/milliman-timesheet-cli.git"
+      },
+      "original": {
+        "ref": "refs/tags/v0.1.0",
+        "type": "git",
+        "url": "ssh://git@github.com/Milliman-CMHH/milliman-timesheet-cli.git"
+      }
+    },
     "mnw": {
       "locked": {
         "lastModified": 1780772958,
@@ -220,6 +236,7 @@
         "git-hooks-nix": "git-hooks-nix",
         "home-manager": "home-manager",
         "import-tree": "import-tree",
+        "milliman-timesheet-cli": "milliman-timesheet-cli",
         "nixos-wsl": "nixos-wsl",
         "nixpkgs": "nixpkgs",
         "nvf": "nvf",

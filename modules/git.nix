@@ -32,6 +32,11 @@ _: {
               init = {
                 defaultBranch = "main";
               };
+              url = {
+                "git@github.com:" = {
+                  insteadOf = "https://github.com/";
+                };
+              };
               user = {
                 email = config.my.home.git.userEmail;
                 name = config.my.home.git.userName;

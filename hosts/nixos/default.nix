@@ -12,6 +12,7 @@ let
     home
     lazygit
     mcp
+    milliman-timesheet-cli
     nvf
     opencode
     secretspec
