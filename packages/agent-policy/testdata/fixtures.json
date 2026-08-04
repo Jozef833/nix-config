@@ -11,7 +11,7 @@
   },
   {
     "name": "readme-3-network-find",
-    "command": "cd \"/mnt/t/HEALTH PRACTICE INFORMATION\" && find . -maxdepth 4 \\( -iname \"*bonus*\" -o -iname \"*billing*polic*\" -o -iname \"*productive*\" -o -iname \"*z-code*\" -o -iname \"*zcode*\" -o -iname \"*z project*\" \\) -not -name \"~\\$*\" 2>/dev/null | head -60",
+    "command": "cd \"/mnt/t/SOME DEPARTMENT\" && find . -maxdepth 4 \\( -iname \"*bonus*\" -o -iname \"*billing*polic*\" -o -iname \"*z-code*\" \\) -not -name \"~\\$*\" 2>/dev/null | head -60",
     "expect": "deny"
   },
   {

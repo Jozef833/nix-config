@@ -1,5 +1,5 @@
 // agent-policy evaluates agent-issued bash commands against a declarative
-// policy: deny with a teaching message, rewrite under a time budget, or allow.
+// policy, allowing or denying each with a teaching message.
 package main
 
 import (

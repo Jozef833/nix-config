@@ -15,11 +15,11 @@ type Policy struct {
 // and no Unless matcher is satisfied within that same scope.
 //
 // Scope controls how close together the matchers must co-occur:
-//   - "command": one simple command satisfies everything (default for a
-//     single matcher)
-//   - "loop": the commands of one loop body satisfy everything (default for
-//     multiple matchers: "script")
-//   - "script": commands anywhere in the submitted script
+//   - "command": one simple command satisfies everything (default when a
+//     rule has a single matcher)
+//   - "loop": the commands of one loop body satisfy everything
+//   - "script": commands anywhere in the submitted script (default when a
+//     rule has more than one matcher)
 //
 // Rules are an unordered set. A rule has no name; its message is its
 // documentation.
@@ -98,6 +98,7 @@ func (p *Policy) validate() error {
 				if len(m.Command) == 0 && len(m.Args) == 0 {
 					return fmt.Errorf("rule %d: matcher needs command or args", i+1)
 				}
+				m.argsRes = nil
 				for _, expr := range m.Args {
 					re, err := regexp.Compile(expr)
 					if err != nil {
