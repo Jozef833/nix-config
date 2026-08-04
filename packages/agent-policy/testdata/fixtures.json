@@ -55,8 +55,13 @@
     "expect": "allow"
   },
   {
-    "name": "scoped-network-find",
+    "name": "depth-only-network-find",
     "command": "find /mnt/t/MISC/ClientX/2026 -maxdepth 2 -iname '*bonus*'",
+    "expect": "deny"
+  },
+  {
+    "name": "bounded-network-find",
+    "command": "timeout 5 find /mnt/t/MISC/ClientX/2026 -maxdepth 2 -iname '*bonus*'",
     "expect": "allow"
   },
   {

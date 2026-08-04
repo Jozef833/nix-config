@@ -19,7 +19,7 @@
           "args": "(^| )/( |$)|(^| )/nix(/[^ ]*)?( |$)"
         }
       ],
-      "message": "agent-policy: a traversal rooted at / or the nix store enumerates an enormous tree. Resolve instead: readlink -f \"$(command -v <bin>)\" for a binary's store path; nix eval nixpkgs#<pkg>.outPath for a package; nix-locate <file> for file-to-package. Otherwise pick a reasoned, specific root and search there."
+      "message": "agent-policy: a traversal rooted at / or the nix store enumerates an enormous tree. Resolve instead: readlink -f \"$(command -v <bin>)\" for a binary's store path; nix eval nixpkgs#<pkg>.outPath for a package; nix-locate <file> for file-to-package. Otherwise pick a reasoned, specific root — and if a broad scan is truly unavoidable, bound it hard: timeout 5 <cmd> ... with a -maxdepth."
     },
     {
       "match": [
@@ -31,12 +31,11 @@
           ]
         }
       ],
-      "message": "agent-policy: recursive grep from / or the nix store reads an enormous tree. Resolve the location first (readlink -f, nix eval, nix-locate), then search a reasoned root."
+      "message": "agent-policy: recursive grep from / or the nix store reads an enormous tree. Resolve the location first (readlink -f, nix eval, nix-locate), then search a reasoned root — and if a broad scan is truly unavoidable, bound it hard: timeout 5 grep ... with a narrower root."
     },
     {
       "match": [{ "command": ["du", "fd", "find", "rg", "tree"], "args": "(^| )/mnt/" }],
-      "unless": [{ "args": "-maxdepth [1-3]( |$)|--max-depth[= ][1-3]( |$)" }],
-      "message": "agent-policy: /mnt/* paths are slow network/Windows mounts where every directory read is a round trip. Search from a deep, specific root or ls the target directory first to orient."
+      "message": "agent-policy: /mnt/* paths are slow network/Windows mounts where every directory read is a round trip. Bound any search there hard — a few seconds already covers enormous ground: timeout 5 <cmd> ... with -maxdepth 3 or less from a deep, specific root (e.g. timeout 5 find /mnt/<share>/<dir> -maxdepth 2 -iname '*<term>*'), or ls the target directory first to orient."
     },
     {
       "scope": "script",
@@ -44,8 +43,7 @@
         { "command": "cd", "args": "^/mnt/" },
         { "command": ["du", "fd", "find", "rg", "tree"] }
       ],
-      "unless": [{ "args": "-maxdepth [1-3]( |$)|--max-depth[= ][1-3]( |$)" }],
-      "message": "agent-policy: this cd targets a slow network/Windows mount and the script then walks the filesystem. Search from a deep, specific root or ls the target directory first to orient."
+      "message": "agent-policy: this cd targets a slow network/Windows mount and the script then walks the filesystem. Bound the search hard: timeout 5 <cmd> ... with -maxdepth 3 or less, or ls the target directory first to orient."
     },
     {
       "match": [{ "command": "find", "args": "repositories" }],

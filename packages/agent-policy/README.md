@@ -73,6 +73,11 @@ Changes deploy at the next rebuild; the git diff is the review gate.
 
 - Anchoring on argv[0] means `sudo find /` or `xargs find /` does not trip a
   `command: "find"` rule. Add a targeted rule if it starts happening.
+- The same anchoring makes `timeout` the *sanctioned* escape hatch:
+  `timeout 5 find ...` deliberately bypasses traversal rules, because a
+  search bounded to a few seconds is exactly what the policy wants — a depth
+  cap limits pathological routes, but the tight timeout is what actually
+  caps the cost. Deny messages teach that form.
 - Inline scripts (`bash -c '...'`) are not analyzed — argv contents are plain
   text to the engine. Deliberately deferred as too hard to do well this
   early; args regexes can still match the quoted text if a rule wants to.
@@ -95,9 +100,10 @@ Changes deploy at the next rebuild; the git diff is the review gate.
 - `grep` after `cd` onto a mount is not covered by the script-scoped rule
   (only recursive-by-default tools are listed) to avoid denying single-file
   greps; add a flag-gated variant if it bites.
-- Depth exceptions recognize `-maxdepth`/`--max-depth` only (`fd -d 2`
-  passes unnoticed — it matches no deny rule's unless, but also doesn't need
-  to). Extend the unless patterns as tools show up in practice.
+- A generous wrapper (`timeout 300 find /mnt/...`) escapes the same way a
+  tight one does — nothing checks the duration. If agents start reaching for
+  large values, add a rule matching `command: "timeout"` with a duration
+  pattern.
 - Deferred from v1 by design review: argv-level PATH shims (exec-time
   enforcement), automated in-session self-healing, and any filesystem
   classification in the engine.
