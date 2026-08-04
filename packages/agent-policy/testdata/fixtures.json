@@ -1,0 +1,77 @@
+[
+  {
+    "name": "readme-1-find-from-root",
+    "command": "find / -maxdepth 6 -iname \"*openclaw*\" -type d 2>/dev/null | grep -v \"^/proc\" | head -30",
+    "expect": "deny"
+  },
+  {
+    "name": "readme-2-ci-poll-loop",
+    "command": "cd /home/nixos/Documents/personal/repositories/Project-Atlas && for i in 1 2 3 4 5 6 7 8; do\n  sleep 20\n  out=$(gh run view 29855311448 --json status,conclusion 2>&1)\n  status=$(echo \"$out\" | python3 -c \"import json,sys; d=json.load(sys.stdin); print(d['status'])\")\n  echo \"$(date +%T) $out\"\n  if [ \"$status\" = \"completed\" ]; then break; fi\ndone",
+    "expect": "deny"
+  },
+  {
+    "name": "readme-3-network-find",
+    "command": "cd \"/mnt/t/SOME DEPARTMENT\" && find . -maxdepth 4 \\( -iname \"*bonus*\" -o -iname \"*billing*polic*\" -o -iname \"*z-code*\" \\) -not -name \"~\\$*\" 2>/dev/null | head -60",
+    "expect": "deny"
+  },
+  {
+    "name": "readme-4-imperative-install",
+    "command": "nix profile install nixpkgs#unzip nixpkgs#poppler_utils nixpkgs#pandoc 2>&1 | tail -5; echo \"=== done ===\"; which unzip pdftotext pandoc",
+    "expect": "deny"
+  },
+  {
+    "name": "store-enumeration",
+    "command": "find /nix/store -maxdepth 1 -name '*python*'",
+    "expect": "deny"
+  },
+  {
+    "name": "recursive-grep-from-root",
+    "command": "grep -r secret /",
+    "expect": "deny"
+  },
+  {
+    "name": "shallow-network-find",
+    "command": "find /mnt/t/MISC -iname '*bonus*'",
+    "expect": "deny"
+  },
+  {
+    "name": "unpruned-repo-find",
+    "command": "find /home/nixos/Documents/personal/repositories/atlas -name settings.py",
+    "expect": "deny"
+  },
+  {
+    "name": "git-index-lookup",
+    "command": "git ls-files '*settings.py'",
+    "expect": "allow"
+  },
+  {
+    "name": "sleep-then-single-check",
+    "command": "sleep 30; gh run view 12345 --json status",
+    "expect": "allow"
+  },
+  {
+    "name": "pruned-repo-find",
+    "command": "find /home/nixos/Documents/personal/repositories/atlas -name settings.py -not -path '*/.venv/*'",
+    "expect": "allow"
+  },
+  {
+    "name": "depth-only-network-find",
+    "command": "find /mnt/t/MISC/ClientX/2026 -maxdepth 2 -iname '*bonus*'",
+    "expect": "deny"
+  },
+  {
+    "name": "bounded-network-find",
+    "command": "timeout 5 find /mnt/t/MISC/ClientX/2026 -maxdepth 2 -iname '*bonus*'",
+    "expect": "allow"
+  },
+  {
+    "name": "home-grep",
+    "command": "grep -rn TODO .",
+    "expect": "allow"
+  },
+  {
+    "name": "dynamic-root-find",
+    "command": "find \"$PROJECT_DIR\" -name '*.csproj'",
+    "expect": "allow"
+  }
+]

@@ -1,3 +1,7 @@
+.devenv*
 .direnv
+/packages/agent-policy/agent-policy
 .pre-commit-config.yaml
+devenv.local.nix
+devenv.local.yaml
 result
