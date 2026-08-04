@@ -1,6 +1,7 @@
 { config, inputs, ... }:
 let
   homeAspects = with config.flake.modules.homeManager; [
+    agent-policy
     azure-cli
     bash
     claude-code

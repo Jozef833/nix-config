@@ -1,0 +1,132 @@
+[
+  {
+    "name": "readme-1-find-from-root",
+    "command": "find / -maxdepth 6 -iname \"*openclaw*\" -type d 2>/dev/null | grep -v \"^/proc\" | head -30",
+    "cwd": "/home/nixos",
+    "expect": "deny",
+    "rule": "resolve-not-enumerate"
+  },
+  {
+    "name": "readme-2-ci-poll-loop",
+    "command": "cd /home/nixos/Documents/personal/repositories/Project-Atlas && for i in 1 2 3 4 5 6 7 8; do\n  sleep 20\n  out=$(gh run view 29855311448 --json status,conclusion 2>&1)\n  status=$(echo \"$out\" | python3 -c \"import json,sys; d=json.load(sys.stdin); print(d['status'])\")\n  echo \"$(date +%T) $out\"\n  if [ \"$status\" = \"completed\" ]; then break; fi\ndone",
+    "cwd": "/home/nixos",
+    "expect": "deny",
+    "rule": "watch-ci-runs"
+  },
+  {
+    "name": "readme-3-network-find",
+    "command": "cd \"/mnt/t/HEALTH PRACTICE INFORMATION\" && find . -maxdepth 4 \\( -iname \"*bonus*\" -o -iname \"*billing*polic*\" -o -iname \"*productive*\" -o -iname \"*z-code*\" -o -iname \"*zcode*\" -o -iname \"*z project*\" \\) -not -name \"~\\$*\" 2>/dev/null | head -60",
+    "cwd": "/home/nixos",
+    "expect": "deny",
+    "rule": "scope-network-search"
+  },
+  {
+    "name": "readme-4-imperative-install",
+    "command": "nix profile install nixpkgs#unzip nixpkgs#poppler_utils nixpkgs#pandoc 2>&1 | tail -5; echo \"=== done ===\"; which unzip pdftotext pandoc",
+    "cwd": "/home/nixos",
+    "expect": "deny",
+    "rule": "declarative-packages"
+  },
+  {
+    "name": "readme-5-find-root-in-devenv",
+    "command": "devenv -q shell -- bash -c 'cargo doc -p openssl-probe --no-deps -q 2>/dev/null; ls ~/.cargo/registry/src/*/openssl-probe-0.2.1/src/ 2>/dev/null; find / -path /proc -prune -o -type d -name \"openssl-probe-0.2.1\" -print 2>/dev/null | head'",
+    "cwd": "/home/nixos/Documents/personal/repositories/Project-Atlas",
+    "expect": "deny",
+    "rule": "resolve-not-enumerate"
+  },
+  {
+    "name": "store-enumeration",
+    "command": "find /nix/store -maxdepth 1 -name '*python*'",
+    "cwd": "/home/nixos",
+    "expect": "deny",
+    "rule": "resolve-not-enumerate"
+  },
+  {
+    "name": "recursive-grep-from-root",
+    "command": "grep -r secret /",
+    "cwd": "/home/nixos",
+    "expect": "deny",
+    "rule": "resolve-not-enumerate"
+  },
+  {
+    "name": "shallow-network-find",
+    "command": "find /mnt/t/MISC -iname '*bonus*'",
+    "cwd": "/home/nixos",
+    "expect": "deny",
+    "rule": "scope-network-search"
+  },
+  {
+    "name": "unpruned-repo-find",
+    "command": "find /home/nixos/Documents/personal/repositories/atlas -name settings.py",
+    "cwd": "/home/nixos",
+    "expect": "deny",
+    "rule": "index-repo-search"
+  },
+  {
+    "name": "cd-into-store-then-find",
+    "command": "cd /nix/store && find . -maxdepth 2 -name '*python*'",
+    "cwd": "/home/nixos",
+    "expect": "deny",
+    "rule": "resolve-not-enumerate"
+  },
+  {
+    "name": "git-index-lookup",
+    "command": "git ls-files '*settings.py'",
+    "cwd": "/home/nixos/Documents/personal/repositories/atlas",
+    "expect": "allow"
+  },
+  {
+    "name": "resolver-lookup",
+    "command": "readlink -f \"$(command -v python3)\"",
+    "cwd": "/home/nixos",
+    "expect": "allow"
+  },
+  {
+    "name": "ephemeral-nix-shell",
+    "command": "nix shell nixpkgs#ripgrep --command rg --version",
+    "cwd": "/home/nixos",
+    "expect": "allow"
+  },
+  {
+    "name": "watch-run",
+    "command": "gh run watch 29855311448 --exit-status",
+    "cwd": "/home/nixos/Documents/personal/repositories/Project-Atlas",
+    "expect": "allow"
+  },
+  {
+    "name": "plain-build",
+    "command": "cargo build --locked --workspace",
+    "cwd": "/home/nixos/Documents/personal/repositories/Project-Atlas",
+    "expect": "allow"
+  },
+  {
+    "name": "pruned-repo-find",
+    "command": "find /home/nixos/Documents/personal/repositories/atlas -name settings.py -not -path '*/.venv/*'",
+    "cwd": "/home/nixos",
+    "expect": "budget"
+  },
+  {
+    "name": "scoped-network-find",
+    "command": "find /mnt/t/MISC/ClientX/2026 -maxdepth 2 -iname '*bonus*'",
+    "cwd": "/home/nixos",
+    "expect": "budget"
+  },
+  {
+    "name": "repo-ripgrep",
+    "command": "rg -l 'class BillingRules'",
+    "cwd": "/home/nixos/Documents/personal/repositories/atlas",
+    "expect": "budget"
+  },
+  {
+    "name": "home-grep",
+    "command": "grep -rn TODO .",
+    "cwd": "/home/nixos/nix-config",
+    "expect": "budget"
+  },
+  {
+    "name": "dynamic-root-find",
+    "command": "find \"$PROJECT_DIR\" -name '*.csproj'",
+    "cwd": "/home/nixos",
+    "expect": "budget"
+  }
+]

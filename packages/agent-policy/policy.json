@@ -1,0 +1,47 @@
+{
+  "budget": {
+    "reflection": "agent-policy: this command was terminated after exceeding its 60-second budget. Reassess the approach: prefer an index or resolver over walking the filesystem (git ls-files or fd inside repositories; readlink -f \"$(command -v <bin>)\", nix eval, or nix-locate for anything nix; the package manager's own metadata elsewhere), or rerun from a narrower root with an explicit depth bound. If a general rule would have caught this before it ran, add the rule to ~/nix-config/packages/agent-policy/policy.json and a must-deny fixture to ~/nix-config/packages/agent-policy/testdata/fixtures.json, then run 'agent-policy test' from ~/nix-config/packages/agent-policy to prove it. Keep in-session policy edits additive; they deploy at the next rebuild.",
+    "timeoutSeconds": 60
+  },
+  "rules": [
+    {
+      "name": "declarative-packages",
+      "kind": "command",
+      "prefixes": [
+        ["nix", "profile", "install"],
+        ["nix", "profile", "add"]
+      ],
+      "message": "agent-policy: this NixOS system is declarative. Declare the package in ~/nix-config and rebuild, or use an ephemeral 'nix shell nixpkgs#<pkg> --command ...' for one-off needs."
+    },
+    {
+      "name": "watch-ci-runs",
+      "kind": "loop",
+      "all": [
+        [["sleep"]],
+        [["gh", "run", "view"], ["gh", "run", "list"]]
+      ],
+      "message": "agent-policy: polling CI in a sleep loop wastes tokens and reinvents the wheel. Use: gh run watch <run-id> --exit-status"
+    },
+    {
+      "name": "resolve-not-enumerate",
+      "kind": "traversal",
+      "classes": ["nix-store", "root"],
+      "message": "agent-policy: a traversal rooted at / or the nix store enumerates an enormous tree. Resolve instead: readlink -f \"$(command -v <bin>)\" for an active binary's store path; nix eval nixpkgs#<pkg>.outPath for a package; nix-locate <file> for file-to-package. For anything else, pick a reasoned root (~/Documents/personal/repositories, ~/nix-config) and search there."
+    },
+    {
+      "name": "scope-network-search",
+      "kind": "traversal",
+      "classes": ["network", "windows"],
+      "require": { "maxDepth": 3, "minRootDepth": 2 },
+      "message": "agent-policy: this path is a slow network/Windows mount where every directory read is a round trip. Search from a root at least two levels below the mount point with an explicit depth bound of 3 or less (e.g. find /mnt/t/<AREA>/<CLIENT> -maxdepth 2 -iname '*<term>*'), or ls the likely directory first to orient."
+    },
+    {
+      "name": "index-repo-search",
+      "kind": "traversal",
+      "commands": ["find"],
+      "classes": ["repos"],
+      "require": { "pruned": true },
+      "message": "agent-policy: inside a git repository, query the index first: git ls-files '*<name>*', or fd/rg which honor .gitignore. Raw find must bound its walk: add -not -path '*/.venv/*' -not -path '*/node_modules/*', a -prune, or a -maxdepth."
+    }
+  ]
+}

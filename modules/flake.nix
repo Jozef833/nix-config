@@ -70,6 +70,9 @@
             deadnix = {
               enable = true;
             };
+            gofmt = {
+              enable = true;
+            };
             nixfmt = {
               enable = true;
             };
