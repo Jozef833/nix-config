@@ -1,16 +1,15 @@
 package main
 
 import (
-	"path"
 	"strings"
 
 	"mvdan.cc/sh/v3/syntax"
 )
 
 // The engine models exactly one binary: bash itself. It parses the script,
-// enumerates every simple command (including inside $(...), <(...), and
-// inline `bash -c '...'` scripts wherever they appear in an argv), and tags
-// loop membership. What any other binary's flags mean is the rules' business.
+// enumerates every simple command (including inside $(...) and <(...)), and
+// tags loop membership. What any other binary's flags mean is the rules'
+// business.
 
 // subcmd is one simple command: its argv[0] and the remaining argv joined
 // with spaces for regex matching. Words built purely from literals are
@@ -32,10 +31,7 @@ type walker struct {
 	src       string
 	res       *analysis
 	loopStack []*[]subcmd
-	depth     int
 }
-
-const maxRecursionDepth = 20
 
 func analyze(src string) *analysis {
 	res := &analysis{}
@@ -61,7 +57,7 @@ func (w *walker) stmts(list []*syntax.Stmt) {
 }
 
 func (w *walker) stmt(s *syntax.Stmt) {
-	if s == nil || w.depth > maxRecursionDepth {
+	if s == nil {
 		return
 	}
 	for _, r := range s.Redirs {
@@ -161,36 +157,11 @@ func (w *walker) wordParts(parts []syntax.WordPart) {
 }
 
 func (w *walker) emit(argv []arg) {
-	if script, ok := inlineScript(argv); ok && w.depth < maxRecursionDepth {
-		if f, err := parseScript(script); err == nil {
-			sub := &walker{src: script, res: w.res, loopStack: w.loopStack, depth: w.depth + 1}
-			sub.stmts(f.Stmts)
-		}
-	}
 	cmd := subcmd{name: argv[0].text, nameLit: argv[0].literal, args: joinArgs(argv[1:])}
 	w.res.commands = append(w.res.commands, cmd)
 	for _, acc := range w.loopStack {
 		*acc = append(*acc, cmd)
 	}
-}
-
-var shellNames = map[string]bool{"bash": true, "dash": true, "sh": true, "zsh": true}
-
-// inlineScript finds a literal `bash -c '<script>'` (or sh/dash/zsh) anywhere
-// in an argv — so `sudo bash -c '...'` and `devenv shell -- bash -c '...'`
-// are seen without modeling sudo or devenv.
-func inlineScript(argv []arg) (string, bool) {
-	for i := 0; i < len(argv); i++ {
-		if !argv[i].literal || !shellNames[path.Base(argv[i].text)] {
-			continue
-		}
-		for j := i + 1; j+1 < len(argv); j++ {
-			if argv[j].literal && argv[j].text == "-c" && argv[j+1].literal {
-				return argv[j+1].text, true
-			}
-		}
-	}
-	return "", false
 }
 
 type arg struct {

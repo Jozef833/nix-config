@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"sort"
-	"strings"
 )
 
 type Policy struct {
@@ -23,8 +21,8 @@ type Policy struct {
 //     multiple matchers: "script")
 //   - "script": commands anywhere in the submitted script
 //
-// A rule has no name: the matchers are its identity (duplicates are a load
-// error) and the message is its documentation.
+// Rules are an unordered set. A rule has no name; its message is its
+// documentation.
 type Rule struct {
 	Match   []Matcher `json:"match"`
 	Message string    `json:"message"`
@@ -75,7 +73,6 @@ func loadPolicy(path string) (*Policy, error) {
 }
 
 func (p *Policy) validate() error {
-	seen := map[string]int{}
 	for i := range p.Rules {
 		r := &p.Rules[i]
 		if len(r.Match) == 0 {
@@ -110,28 +107,6 @@ func (p *Policy) validate() error {
 				}
 			}
 		}
-		key := ruleKey(r)
-		if prev, dup := seen[key]; dup {
-			return fmt.Errorf("rules %d and %d are duplicates (same scope and matchers)", prev+1, i+1)
-		}
-		seen[key] = i
 	}
 	return nil
-}
-
-func ruleKey(r *Rule) string {
-	return r.Scope + "|" + matcherSetKey(r.Match) + "||" + matcherSetKey(r.Unless)
-}
-
-func matcherSetKey(ms []Matcher) string {
-	keys := make([]string, len(ms))
-	for i, m := range ms {
-		cmds := append([]string(nil), m.Command...)
-		sort.Strings(cmds)
-		args := append([]string(nil), m.Args...)
-		sort.Strings(args)
-		keys[i] = strings.Join(cmds, ",") + "\x1f" + strings.Join(args, "\x1f")
-	}
-	sort.Strings(keys)
-	return strings.Join(keys, "\x1e")
 }

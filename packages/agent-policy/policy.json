@@ -2,7 +2,7 @@
   "rules": [
     {
       "match": [{ "command": "nix", "args": "^profile (install|add)( |$)" }],
-      "message": "agent-policy: this NixOS system is declarative. Declare the package in ~/nix-config and rebuild, or use an ephemeral 'nix shell nixpkgs#<pkg> --command ...' for one-off needs."
+      "message": "agent-policy: this NixOS system is declarative. Use an ephemeral 'nix shell nixpkgs#<pkg> --command ...' for one-off needs."
     },
     {
       "scope": "loop",
@@ -19,7 +19,7 @@
           "args": "(^| )/( |$)|(^| )/nix(/[^ ]*)?( |$)"
         }
       ],
-      "message": "agent-policy: a traversal rooted at / or the nix store enumerates an enormous tree. Resolve instead: readlink -f \"$(command -v <bin>)\" for a binary's store path; nix eval nixpkgs#<pkg>.outPath for a package; nix-locate <file> for file-to-package. Otherwise pick a reasoned root (~/Documents/personal/repositories, ~/nix-config) and search there."
+      "message": "agent-policy: a traversal rooted at / or the nix store enumerates an enormous tree. Resolve instead: readlink -f \"$(command -v <bin>)\" for a binary's store path; nix eval nixpkgs#<pkg>.outPath for a package; nix-locate <file> for file-to-package. Otherwise pick a reasoned, specific root and search there."
     },
     {
       "match": [
@@ -36,7 +36,7 @@
     {
       "match": [{ "command": ["du", "fd", "find", "rg", "tree"], "args": "(^| )/mnt/" }],
       "unless": [{ "args": "-maxdepth [1-3]( |$)|--max-depth[= ][1-3]( |$)" }],
-      "message": "agent-policy: /mnt/* paths are slow network/Windows mounts where every directory read is a round trip. Search from a deep, specific root with -maxdepth 3 or less (e.g. find /mnt/t/<AREA>/<CLIENT> -maxdepth 2 -iname '*<term>*'), or ls the target directory first to orient."
+      "message": "agent-policy: /mnt/* paths are slow network/Windows mounts where every directory read is a round trip. Search from a deep, specific root or ls the target directory first to orient."
     },
     {
       "scope": "script",
@@ -45,7 +45,7 @@
         { "command": ["du", "fd", "find", "rg", "tree"] }
       ],
       "unless": [{ "args": "-maxdepth [1-3]( |$)|--max-depth[= ][1-3]( |$)" }],
-      "message": "agent-policy: this cd targets a slow network/Windows mount and the script then walks the filesystem. Search from a deep, specific root with -maxdepth 3 or less, or ls the target directory first to orient."
+      "message": "agent-policy: this cd targets a slow network/Windows mount and the script then walks the filesystem. Search from a deep, specific root or ls the target directory first to orient."
     },
     {
       "match": [{ "command": "find", "args": "repositories" }],

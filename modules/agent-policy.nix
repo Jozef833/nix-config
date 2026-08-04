@@ -29,7 +29,9 @@ _: {
                 stdin: new TextEncoder().encode(cmd),
               });
               if (proc.exitCode !== 0) return;
-              verdict = JSON.parse(new TextDecoder().decode(proc.stdout));
+              const out = new TextDecoder().decode(proc.stdout).trim();
+              if (out.length === 0) return; // silence means allow
+              verdict = JSON.parse(out);
             } catch {
               return; // fail open when the engine is unavailable
             }

@@ -7,9 +7,8 @@ import (
 	"os"
 )
 
-// runCheck evaluates a command read from stdin and prints the verdict as
-// JSON: {"action":"allow"} or {"action":"deny","message":...}. The OpenCode
-// plugin consumes this.
+// runCheck evaluates a command read from stdin. Silence means allow; a deny
+// prints {"action":"deny","message":...}. The OpenCode plugin consumes this.
 func runCheck(args []string) error {
 	fs := flag.NewFlagSet("check", flag.ContinueOnError)
 	policyPath := fs.String("policy", "policy.json", "path to policy.json")
@@ -24,5 +23,9 @@ func runCheck(args []string) error {
 	if err != nil {
 		return err
 	}
-	return json.NewEncoder(os.Stdout).Encode(evaluate(pol, string(src)))
+	v := evaluate(pol, string(src))
+	if v.Action != "deny" {
+		return nil
+	}
+	return json.NewEncoder(os.Stdout).Encode(v)
 }

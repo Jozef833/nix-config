@@ -21,11 +21,10 @@ so an engine that tries to *understand* commands (search roots, transparent
 launchers like `sudo`, per-tool depth flags) accretes unbounded per-binary
 tables. This engine instead models exactly one binary: bash itself. It
 parses the script (via `mvdan.cc/sh`), enumerates every simple command —
-including inside `$(...)`, `<(...)`, and inline `bash -c '...'` scripts
-wherever they appear in an argv — and tags loop membership. Those are facts
-about bash structure, which is finite and portable. Everything else (which
-paths are slow, which tools traverse, what counts as bounded) is expressed in
-`policy.json`, which is deliberately personal and curated.
+including inside `$(...)` and `<(...)` — and tags loop membership. Those are
+facts about bash structure, which is finite and portable. Everything else
+(which paths are slow, which tools traverse, what counts as bounded) is
+expressed in `policy.json`, which is deliberately personal and curated.
 
 **Intervene before execution, never during.** Verdicts are allow or deny,
 decided pre-flight. A false deny costs a rephrase; a runtime interruption can
@@ -60,9 +59,10 @@ modeling stay deleted.
   (same simple command; default for one matcher), `loop` (same loop body),
   `script` (anywhere; default for several matchers).
 - `unless`: suppresses the rule when satisfied within the same scope.
-- Rules are evaluated in order; the first match denies. A rule has no name:
-  its matchers are its identity (duplicates are a load error) and the message
-  is its documentation.
+- Rules are an unordered set: every rule is always evaluated, so order never
+  changes the outcome, and a command that violates several rules is denied
+  with all of their messages. A rule has no name; its message is its
+  documentation.
 
 Workflow for a new rule: add it to `policy.json`, add a fixture to
 `testdata/fixtures.json` proving it fires (plus one proving a legitimate
@@ -72,9 +72,10 @@ Changes deploy at the next rebuild; the git diff is the review gate.
 ## Conscious tradeoffs
 
 - Anchoring on argv[0] means `sudo find /` or `xargs find /` does not trip a
-  `command: "find"` rule. Add a targeted rule if it starts happening; the
-  one exception already built in is bash itself (`sudo bash -c 'find /'` is
-  analyzed, because recognizing bash is not binary-specific modeling).
+  `command: "find"` rule. Add a targeted rule if it starts happening.
+- Inline scripts (`bash -c '...'`) are not analyzed — argv contents are plain
+  text to the engine. Deliberately deferred as too hard to do well this
+  early; args regexes can still match the quoted text if a rule wants to.
 - No path resolution: `cd` targets are matched textually (see the
   script-scoped `cd /mnt/*` rule), so a traversal after a *dynamic* cd
   (`cd "$DIR" && find .`) is invisible.
@@ -82,11 +83,12 @@ Changes deploy at the next rebuild; the git diff is the review gate.
   host tool's own timeout. If a pattern recurs, it becomes a rule.
 - Learning is manual: prompt the agent to propose a rule + fixture, review
   the diff, rebuild. There is no automated self-modification.
-- Inline-script detection scans argvs textually, so contrived cases like
-  `echo bash -c 'find /'` are analyzed and may over-deny. Cheap to rephrase.
 
 ## TODO
 
+- Inline shell script analysis (`bash -c '...'`, including behind wrappers
+  like `sudo` or `devenv shell --`) is deferred; compendium item 5 (a
+  `find /` inside `devenv shell -- bash -c '...'`) is currently uncaught.
 - Fixtures encode this machine's layout (`/mnt/*` mounts, the repositories
   path); portable they are not. Fine for now — the policy itself is personal
   — but worth revisiting if this is ever extracted for reuse.

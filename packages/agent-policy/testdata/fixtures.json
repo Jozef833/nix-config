@@ -20,11 +20,6 @@
     "expect": "deny"
   },
   {
-    "name": "readme-5-find-root-in-devenv",
-    "command": "devenv -q shell -- bash -c 'cargo doc -p openssl-probe --no-deps -q 2>/dev/null; ls ~/.cargo/registry/src/*/openssl-probe-0.2.1/src/ 2>/dev/null; find / -path /proc -prune -o -type d -name \"openssl-probe-0.2.1\" -print 2>/dev/null | head'",
-    "expect": "deny"
-  },
-  {
     "name": "store-enumeration",
     "command": "find /nix/store -maxdepth 1 -name '*python*'",
     "expect": "deny"
