@@ -13,22 +13,11 @@ _: {
             enable = true;
             enableMcpIntegration = true;
             settings = {
-              agent = {
-                build = {
-                  permission = {
-                    task = "ask";
-                  };
-                };
-                plan = {
-                  permission = {
-                    task = "ask";
-                  };
-                };
-              };
               autoupdate = false;
               permission = {
                 external_directory = {
                   "/nix/**" = "allow";
+                  "/tmp/**" = "allow";
                 };
                 skill = {
                   customize-opencode = "deny";

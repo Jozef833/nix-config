@@ -16,7 +16,10 @@ _: {
         programs = {
           gh = lib.recursiveUpdate {
             enable = true;
-            extensions = with pkgs; [ gh-stack ];
+            extensions = with pkgs; [
+              gh-aw
+              gh-stack
+            ];
             gitCredentialHelper = {
               enable = false;
             };
