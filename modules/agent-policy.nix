@@ -93,7 +93,26 @@ _: {
             mainProgram = "agent-policy";
           };
           pname = "agent-policy";
-          src = ../packages/agent-policy;
+          src =
+            let
+              root = ../packages/agent-policy;
+            in
+            lib.fileset.toSource {
+              inherit root;
+              fileset = lib.fileset.unions (
+                [
+                  (root + "/go.mod")
+                  (root + "/go.sum")
+                  (root + "/policy.json")
+                  (root + "/testdata")
+                ]
+                ++ map (name: root + "/${name}") (
+                  lib.attrNames (
+                    lib.filterAttrs (name: type: type == "regular" && lib.hasSuffix ".go" name) (builtins.readDir root)
+                  )
+                )
+              );
+            };
           vendorHash = "sha256-tCFu9E2pFBWBQFiRVvI16FNI3dE1bUKJlsEbvDAo7lo=";
           version = "0.1.0";
         }

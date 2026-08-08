@@ -510,7 +510,7 @@ in
       )
     ]
     ++ (with config.flake.modules.nixos; [
-      atlas-refresh-jobs
+      #atlas-refresh-jobs
       base
       podman
       wsl
