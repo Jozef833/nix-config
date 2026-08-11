@@ -41,7 +41,6 @@ _: {
       clientListRefreshScript =
         env:
         mkRefreshScript "atlas-client-list-refresh-${env}" "atlas" [
-          ''mkdir -p "$TMPDIR"''
           "dotnet run --project src/Atlas.ClientList.Refresh --configuration Release"
         ];
 
@@ -106,7 +105,6 @@ _: {
               script = clientListRefreshScript "dev";
               environment = {
                 ATLAS_ENVIRONMENT = "dev";
-                TMPDIR = "/tmp/atlas-client-list-refresh-dev";
               };
             };
 
@@ -115,7 +113,6 @@ _: {
               script = clientListRefreshScript "prd";
               environment = {
                 ATLAS_ENVIRONMENT = "prd";
-                TMPDIR = "/tmp/atlas-client-list-refresh-prd";
               };
             };
 
