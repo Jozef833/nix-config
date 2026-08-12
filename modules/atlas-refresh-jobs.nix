@@ -77,7 +77,7 @@ _: {
             Type = "oneshot";
             User = user;
             WorkingDirectory = repoPath;
-            ExecStart = "${pkgs.devenv}/bin/devenv -q shell -- ${script}";
+            ExecStart = "${pkgs.util-linux}/bin/flock ${repoPath} ${pkgs.devenv}/bin/devenv -q shell -- ${script}";
             TimeoutStartSec = "2h";
           };
         };
