@@ -91,6 +91,11 @@
                     auto_update = false;
                     show_tips = false;
                   };
+                  compat = {
+                    claude = {
+                      hooks = false;
+                    };
+                  };
                   features = {
                     telemetry = false;
                   };
