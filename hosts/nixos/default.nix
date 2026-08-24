@@ -302,12 +302,25 @@ in
                   ...
                 }:
                 let
+                  adaptiveThinkingModels = [
+                    "claude-opus-5"
+                    "claude-sonnet-5"
+                  ];
+                  azureFoundryAdaptiveDeployments = lib.subtractLists [
+                    "claude-haiku-4-5"
+                  ] azureFoundryClaudeDeployments;
                   azureFoundryClaudeDeployments = [
                     "claude-fable-5"
                     "claude-haiku-4-5"
                     "claude-opus-5"
                     "claude-sonnet-5"
                   ];
+                  claudeThinkingOptions = {
+                    thinking = {
+                      display = "summarized";
+                      type = "adaptive";
+                    };
+                  };
                   signingKey = "/run/secrets/ssh-github";
                 in
                 {
@@ -450,18 +463,27 @@ in
                           settings = {
                             provider = {
                               anthropic = {
+                                models = lib.genAttrs adaptiveThinkingModels (_: {
+                                  options = claudeThinkingOptions;
+                                });
                                 options = {
                                   apiKey = "{file:/run/secrets/anthropic-api-key}";
                                 };
                               };
                               "azure-foundry" = {
-                                models = lib.genAttrs azureFoundryClaudeDeployments (deployment: {
-                                  attachment = true;
-                                  name = deployment;
-                                  reasoning = true;
-                                  temperature = true;
-                                  tool_call = true;
-                                });
+                                models = lib.genAttrs azureFoundryClaudeDeployments (
+                                  deployment:
+                                  {
+                                    attachment = true;
+                                    name = deployment;
+                                    reasoning = true;
+                                    temperature = true;
+                                    tool_call = true;
+                                  }
+                                  // lib.optionalAttrs (lib.elem deployment azureFoundryAdaptiveDeployments) {
+                                    options = claudeThinkingOptions;
+                                  }
+                                );
                                 name = "Azure Foundry (Anthropic)";
                                 npm = "@ai-sdk/anthropic";
                                 options = {
@@ -520,6 +542,11 @@ in
                                   apiKey = "{file:/run/secrets/azure-foundry-api-key}";
                                   baseURL = "https://eastus2.api.cognitive.microsoft.com/openai/v1";
                                 };
+                              };
+                              "github-copilot" = {
+                                models = lib.genAttrs adaptiveThinkingModels (_: {
+                                  options = claudeThinkingOptions;
+                                });
                               };
                             };
                           };
