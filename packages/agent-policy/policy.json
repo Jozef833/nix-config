@@ -53,6 +53,23 @@
       "match": [{ "command": "find", "args": "repositories" }],
       "unless": [{ "args": "-prune|-not -path|-maxdepth" }],
       "message": "agent-policy: inside a git repository, query the index first: git ls-files '*<name>*', or fd/rg which honor .gitignore. Raw find must bound its walk: -not -path '*/.venv/*' -not -path '*/node_modules/*', a -prune, or a -maxdepth."
+    },
+    {
+      "match": [
+        {
+          "command": ["find", "fd"],
+          "args": ["\\.git(/|['\"]|$| )", "-not -path|-prune|--exclude-dir"]
+        }
+      ],
+      "message": "agent-policy: excluding .git still walks it first -- the exclusion hides output, not the traversal. Single repo: git -C <dir> ls-files or grep reads the index directly. Directory of many repos: rg --files or fd walk once, skipping every nested .git and each repo's own .gitignore. For a deliberately ignored or untracked target, ls-files shows nothing -- use git ls-files --others --ignored --exclude-standard or git check-ignore -v <path>."
+    },
+    {
+      "scope": "script",
+      "match": [
+        { "command": ["find", "fd", "tree", "du"] },
+        { "command": ["grep", "rg"], "args": ["-v|--invert-match", "\\.git(/|['\"]|$| )"] }
+      ],
+      "message": "agent-policy: piping through grep -v or rg -v to drop .git/ lines still walks .git first -- the filter hides output, not the traversal. Single repo: git -C <dir> ls-files. Directory of many repos: rg --files or fd. Deliberately untracked target: git ls-files --others --ignored --exclude-standard."
     }
   ]
 }

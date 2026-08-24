@@ -98,5 +98,40 @@
     "name": "dynamic-root-find",
     "command": "find \"$PROJECT_DIR\" -name '*.csproj'",
     "expect": "allow"
+  },
+  {
+    "name": "find-self-excludes-git-same-command",
+    "command": "find . -not -path '*/.git/*' -iname '*claude*'",
+    "expect": "deny"
+  },
+  {
+    "name": "find-piped-grep-v-git-screenshot-case",
+    "command": "find . -iname \"*AGENTS*\" -o -iname \"*CLAUDE*\" -o -iname \"*.opencode*\" -o -iname \"*.claude*\" 2>/dev/null | grep -v -E \"\\.git/\"",
+    "expect": "deny"
+  },
+  {
+    "name": "find-piped-rg-v-git-generalization",
+    "command": "find . -iname '*.env*' | rg -v '\\.git'",
+    "expect": "deny"
+  },
+  {
+    "name": "find-no-git-awareness-stays-allowed",
+    "command": "find \"$PROJECT_DIR\" -name '*.csproj' -not -path '*/node_modules/*'",
+    "expect": "allow"
+  },
+  {
+    "name": "rg-files-multi-repo-container-allowed",
+    "command": "rg --files /home/user/repositories",
+    "expect": "allow"
+  },
+  {
+    "name": "find-in-gitignored-tool-dir-allowed",
+    "command": "find ./.direnv/flake-inputs -type d -iname \"*copilot*\" 2>/dev/null",
+    "expect": "allow"
+  },
+  {
+    "name": "find-in-gitignored-tool-dir-allowed-2",
+    "command": "find ./.direnv/flake-inputs -type f -iname \"*copilot*.nix\" 2>/dev/null",
+    "expect": "allow"
   }
 ]

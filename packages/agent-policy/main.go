@@ -9,13 +9,15 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: agent-policy <claude-hook|check|test> [flags]")
+		fmt.Fprintln(os.Stderr, "usage: agent-policy <claude-hook|grok-hook|check|test> [flags]")
 		os.Exit(2)
 	}
 	var err error
 	switch os.Args[1] {
 	case "claude-hook":
 		err = runClaudeHook(os.Args[2:])
+	case "grok-hook":
+		err = runGrokHook(os.Args[2:])
 	case "check":
 		err = runCheck(os.Args[2:])
 	case "test":

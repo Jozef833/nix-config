@@ -1,4 +1,4 @@
-_: {
+{
   flake.modules.homeManager.nvf =
     { config, lib, ... }:
     {

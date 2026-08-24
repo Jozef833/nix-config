@@ -1,15 +1,15 @@
 # agent-policy
 
-A bash policy engine for coding agents. It evaluates every Bash command that
-Claude Code or OpenCode is about to run against `policy.json` and either
-allows it or denies it with a message that teaches the better approach. The
-denial reason is fed back to the model, so the correction happens in-session
-at the moment it is relevant.
+A bash policy engine for coding agents. It evaluates every Bash command an
+agent is about to run against `policy.json` and either allows it or denies
+it with a message that teaches the better approach. The denial reason is
+fed back to the model, so the correction happens in-session at the moment
+it is relevant.
 
-Wiring lives in `modules/agent-policy.nix`: a Claude Code `PreToolUse` hook
-(`agent-policy claude-hook`) and an OpenCode plugin calling
-`agent-policy check`. Both run under `bypassPermissions` and apply to
-subagents.
+Each supported harness gets a thin adapter — a hook subcommand or native
+plugin that translates that harness's own tool-call schema into a call to
+the shared engine below — wired up in `modules/agent-policy.nix`, running
+under `bypassPermissions` and applying to subagents.
 
 ## Design philosophy
 

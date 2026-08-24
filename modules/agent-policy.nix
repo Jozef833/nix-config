@@ -1,4 +1,4 @@
-_: {
+{
   flake.modules.homeManager.agent-policy =
     {
       config,
@@ -53,6 +53,26 @@ _: {
           packages = [ package ];
         };
 
+        my = {
+          home = {
+            grok-build = {
+              hooks = {
+                PreToolUse = [
+                  {
+                    matcher = "Bash";
+                    hooks = [
+                      {
+                        type = "command";
+                        command = "${lib.getExe package} grok-hook --policy ${settings.policyFile}";
+                      }
+                    ];
+                  }
+                ];
+              };
+            };
+          };
+        };
+
         programs = {
           claude-code = {
             settings = {
@@ -88,7 +108,7 @@ _: {
         { buildGoModule, lib }:
         buildGoModule {
           meta = {
-            description = "Bash policy engine for coding agents: teaching denials for Claude Code and OpenCode";
+            description = "Bash policy engine for coding agents: teaching denials before execution";
             license = lib.licenses.mit;
             mainProgram = "agent-policy";
           };

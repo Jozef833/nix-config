@@ -1,4 +1,4 @@
-_: {
+{
   flake.modules.generic.nixpkgs =
     { config, lib, ... }:
     {

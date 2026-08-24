@@ -10,6 +10,7 @@ let
     gh
     git
     github-copilot-cli
+    grok-build
     home
     lazygit
     mcp
@@ -248,6 +249,7 @@ in
                       "acli-unwrapped"
                       "claude-code"
                       "github-copilot-cli"
+                      "grok-build"
                     ];
                 };
               };
@@ -381,6 +383,39 @@ in
                         userName = "Jozef833";
                       };
 
+                      grok-build = {
+                        envFiles = {
+                          AZURE_FOUNDRY_API_KEY = "/run/secrets/azure-foundry-api-key";
+                        };
+                        overrides = {
+                          model = {
+                            "grok-4.3" = {
+                              api_backend = "chat_completions";
+                              base_url = "https://eastus2.api.cognitive.microsoft.com/openai/v1";
+                              env_key = "AZURE_FOUNDRY_API_KEY";
+                              model = "grok-4.3";
+                              name = "Grok 4.3";
+                            };
+                          };
+                          models = {
+                            default = "grok-4.3";
+                          };
+                          skills = {
+                            disabled = [
+                              "capacity"
+                              "customize"
+                              "deploy-model"
+                              "finetuning"
+                              "microsoft-foundry"
+                              "preset"
+                            ];
+                          };
+                          ui = {
+                            fork_secondary_model = "grok-4.3";
+                          };
+                        };
+                      };
+
                       mcp = {
                         overrides = {
                           servers = {
@@ -436,9 +471,21 @@ in
                               };
                               "azure-foundry-openai" = {
                                 models = {
+                                  "DeepSeek-V4-Flash" = {
+                                    attachment = false;
+                                    reasoning = true;
+                                    temperature = true;
+                                    tool_call = true;
+                                  };
                                   "DeepSeek-V4-Pro" = {
                                     attachment = false;
                                     reasoning = true;
+                                    temperature = true;
+                                    tool_call = true;
+                                  };
+                                  "gpt-4.1-nano" = {
+                                    attachment = true;
+                                    reasoning = false;
                                     temperature = true;
                                     tool_call = true;
                                   };
