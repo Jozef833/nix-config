@@ -513,20 +513,29 @@ in
                                   };
                                   "gpt-5.6-luna" = {
                                     attachment = true;
+                                    provider = {
+                                      npm = "@ai-sdk/openai";
+                                    };
                                     reasoning = true;
-                                    temperature = true;
+                                    temperature = false;
                                     tool_call = true;
                                   };
                                   "gpt-5.6-sol" = {
                                     attachment = true;
+                                    provider = {
+                                      npm = "@ai-sdk/openai";
+                                    };
                                     reasoning = true;
-                                    temperature = true;
+                                    temperature = false;
                                     tool_call = true;
                                   };
                                   "gpt-5.6-terra" = {
                                     attachment = true;
+                                    provider = {
+                                      npm = "@ai-sdk/openai";
+                                    };
                                     reasoning = true;
-                                    temperature = true;
+                                    temperature = false;
                                     tool_call = true;
                                   };
                                   "model-router" = {
