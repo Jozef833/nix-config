@@ -5,6 +5,19 @@
       "message": "agent-policy: this NixOS system is declarative. Use an ephemeral 'nix shell nixpkgs#<pkg> --command ...' for one-off needs."
     },
     {
+      "match": [
+        {
+          "command": "nix",
+          "args": [
+            "^shell( |$)",
+            "(^| )nixpkgs#python[0-9]*( |$)",
+            "(^| )nixpkgs#python[0-9]*Packages\\.[^ ]+( |$)"
+          ]
+        }
+      ],
+      "message": "agent-policy: a Python library supplied as a separate 'nix shell' installable is not added to the interpreter's sys.path. Compose one environment instead; this works in repositories without a flake: nix shell --impure --expr 'let pkgs = (builtins.getFlake \"nixpkgs\").legacyPackages.${builtins.currentSystem}; in pkgs.python312.withPackages (ps: [ ps.<package> ])' --command python ... . Here --impure permits host registry and system lookup; use a pinned flake for shared scripts or CI."
+    },
+    {
       "scope": "script",
       "match": [
         { "command": "sleep" },

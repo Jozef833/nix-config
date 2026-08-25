@@ -20,6 +20,21 @@
     "expect": "deny"
   },
   {
+    "name": "separate-python-library-installable",
+    "command": "nix shell nixpkgs#python312 nixpkgs#python312Packages.openpyxl --command python3 -c 'from openpyxl import load_workbook'",
+    "expect": "deny"
+  },
+  {
+    "name": "composed-ephemeral-python-environment",
+    "command": "nix shell --impure --expr 'let pkgs = (builtins.getFlake \"nixpkgs\").legacyPackages.${builtins.currentSystem}; in pkgs.python312.withPackages (ps: [ ps.openpyxl ])' --command python -c 'from openpyxl import load_workbook'",
+    "expect": "allow"
+  },
+  {
+    "name": "python-with-unrelated-shell-package",
+    "command": "nix shell nixpkgs#python312 nixpkgs#jq --command python --version",
+    "expect": "allow"
+  },
+  {
     "name": "store-enumeration",
     "command": "find /nix/store -maxdepth 1 -name '*python*'",
     "expect": "deny"
