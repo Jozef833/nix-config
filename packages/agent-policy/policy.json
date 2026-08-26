@@ -70,19 +70,23 @@
     {
       "match": [
         {
-          "command": ["find", "fd"],
+          "command": ["find", "fd", "grep", "rg"],
           "args": ["\\.git(/|['\"]|$| )", "-not -path|-prune|--exclude-dir"]
         }
       ],
       "message": "agent-policy: excluding .git still walks it first -- the exclusion hides output, not the traversal. Single repo: git -C <dir> ls-files or grep reads the index directly. Directory of many repos: rg --files or fd walk once, skipping every nested .git and each repo's own .gitignore. For a deliberately ignored or untracked target, ls-files shows nothing -- use git ls-files --others --ignored --exclude-standard or git check-ignore -v <path>."
     },
     {
-      "scope": "script",
       "match": [
-        { "command": ["find", "fd", "tree", "du"] },
-        { "command": ["grep", "rg"], "args": ["-v|--invert-match", "\\.git(/|['\"]|$| )"] }
+        {
+          "command": ["grep", "rg"],
+          "args": [
+            "(^| )-[a-zA-Z]*v|--invert-match",
+            "\\.git(/|['\"]|$| )|node_modules|\\.venv|site-packages|__pycache__|\\.direnv"
+          ]
+        }
       ],
-      "message": "agent-policy: piping through grep -v or rg -v to drop .git/ lines still walks .git first -- the filter hides output, not the traversal. Single repo: git -C <dir> ls-files. Directory of many repos: rg --files or fd. Deliberately untracked target: git ls-files --others --ignored --exclude-standard."
+      "message": "agent-policy: inverting out .git/, node_modules, .venv, site-packages, __pycache__ or .direnv is an admission that a traversal already walked them -- the filter hides the output, not the cost, and whatever else those trees hold (vendored source, cached data) still lands in context on the way past. Skip them at the producer, not after it: git -C <dir> ls-files for one repo; rg --files or fd for a directory of many, since both honor .gitignore and never descend .git; find must -prune the subtree rather than post-filter it. Deliberately untracked target: git ls-files --others --ignored --exclude-standard. If this stream is genuinely not a traversal -- a build log, a saved file list -- narrow it at the source instead of inverting here."
     }
   ]
 }

@@ -148,5 +148,65 @@
     "name": "find-in-gitignored-tool-dir-allowed-2",
     "command": "find ./.direnv/flake-inputs -type f -iname \"*copilot*.nix\" 2>/dev/null",
     "expect": "allow"
+  },
+  {
+    "name": "recursive-grep-piped-grep-v-git",
+    "command": "grep -rn \"networkingMode\\|virtioproxy\\|mirrored\\|169.254.169.254\\|wslconfig\" --include=* -i . 2>/dev/null | grep -v \"^./.git/\" | head -20",
+    "expect": "deny"
+  },
+  {
+    "name": "rg-piped-grep-v-git",
+    "command": "rg -n networkingMode . | grep -v \"^./.git/\"",
+    "expect": "deny"
+  },
+  {
+    "name": "producer-independent-ls-recursive-grep-v-git",
+    "command": "ls -R | grep -v \"\\.git/\"",
+    "expect": "deny"
+  },
+  {
+    "name": "traversal-piped-grep-v-node-modules",
+    "command": "find . -type f | grep -v node_modules",
+    "expect": "deny"
+  },
+  {
+    "name": "traversal-piped-grep-v-venv",
+    "command": "grep -rn IMDS_AUTHORITY . | grep -v \"\\.venv\"",
+    "expect": "deny"
+  },
+  {
+    "name": "traversal-piped-grep-v-site-packages-clustered-flag",
+    "command": "find . -name '*.py' | grep -rv site-packages",
+    "expect": "deny"
+  },
+  {
+    "name": "grep-exclude-dir-git-still-walks-it",
+    "command": "grep -rn networkingMode . --exclude-dir=.git",
+    "expect": "deny"
+  },
+  {
+    "name": "accepted-false-positive-build-log-noise",
+    "command": "npm run build 2>&1 | grep -v node_modules",
+    "expect": "deny"
+  },
+  {
+    "name": "invert-match-without-noise-pattern-allowed",
+    "command": "git ls-files | grep -v \"\\.md$\"",
+    "expect": "allow"
+  },
+  {
+    "name": "invert-match-on-single-log-file-allowed",
+    "command": "grep -v DEBUG /tmp/app.log",
+    "expect": "allow"
+  },
+  {
+    "name": "recursive-grep-reasoned-root-no-filter-allowed",
+    "command": "grep -rn -i networkingMode modules/",
+    "expect": "allow"
+  },
+  {
+    "name": "grep-single-file-no-recursion-allowed",
+    "command": "grep -n wslconfig /mnt/c/Users/me/.wslconfig",
+    "expect": "allow"
   }
 ]

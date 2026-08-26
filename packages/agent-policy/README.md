@@ -78,6 +78,25 @@ Changes deploy at the next rebuild; the git diff is the review gate.
   search bounded to a few seconds is exactly what the policy wants — a depth
   cap limits pathological routes, but the tight timeout is what actually
   caps the cost. Deny messages teach that form.
+- The noise-filter rule (`grep -v` over `.git/`, `node_modules`, `.venv`,
+  `site-packages`, `__pycache__`, `.direnv`) deliberately matches on the
+  *filter alone*, with no list of producing commands. Writing that filter is
+  itself an admission that something already walked those trees, so the
+  producer clause only re-verified — through an incomplete enumeration — what
+  the filter already proves, and enumerating every tool that can walk a
+  directory (`find`, `fd`, `grep -r`, `rg`, `ls -R`, `diff -r`, a `**` glob)
+  is unwinnable. A producer list fails *open*, which is the expensive
+  direction; matching the filter alone fails closed. The accepted cost is
+  false positives on streams that are not traversals at all — `npm run build
+  2>&1 | grep -v node_modules` is denied, and `testdata/fixtures.json` pins
+  that case by name so the tradeoff stays visible under review.
+- The sibling rule for *exclusion flags* (`find -not -path '*/.git/*'`,
+  `grep -r --exclude-dir=.git`) does keep a command list, because there the
+  producer is the only thing to match — no separate filter incriminates it.
+  It stays scoped to `.git` alone: `.git` is special in having tooling that
+  skips it by construction (`git ls-files`, `rg`, `fd`), whereas `-not -path
+  '*/node_modules/*'` is the bound the unpruned-`find` rule actively
+  recommends, and widening this rule would deny its own remedy.
 - Inline scripts (`bash -c '...'`) are not analyzed — argv contents are plain
   text to the engine. Deliberately deferred as too hard to do well this
   early; args regexes can still match the quoted text if a rule wants to.
@@ -97,9 +116,9 @@ Changes deploy at the next rebuild; the git diff is the review gate.
 - Fixtures encode this machine's layout (`/mnt/*` mounts, the repositories
   path); portable they are not. Fine for now — the policy itself is personal
   — but worth revisiting if this is ever extracted for reuse.
-- `grep` after `cd` onto a mount is not covered by the script-scoped rule
-  (only recursive-by-default tools are listed) to avoid denying single-file
-  greps; add a flag-gated variant if it bites.
+- `grep` after `cd` onto a mount is not covered by the script-scoped
+  `cd /mnt/*` rule (only recursive-by-default tools are listed) to avoid
+  denying single-file greps; add a flag-gated variant if it bites.
 - A generous wrapper (`timeout 300 find /mnt/...`) escapes the same way a
   tight one does — nothing checks the duration. If agents start reaching for
   large values, add a rule matching `command: "timeout"` with a duration
