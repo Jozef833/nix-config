@@ -82,14 +82,27 @@
           };
         };
 
-      mkTimer = time: {
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnCalendar = "*-*-* ${time} America/Chicago";
-          Persistent = true;
-          RandomizedDelaySec = "5m";
-        };
-      };
+      refreshOrder = [
+        "atlas-map-refresh"
+        "atlas-conflict-checks-refresh-dev"
+        "atlas-conflict-checks-refresh-prd"
+        "atlas-client-list-refresh-dev"
+        "atlas-client-list-refresh-prd"
+        "atlas-elm-refresh"
+      ];
+
+      chainAfter = lib.listToAttrs (
+        lib.imap0 (
+          i: name:
+          lib.nameValuePair name (
+            if i == 0 then [ ] else [ "${builtins.elemAt refreshOrder (i - 1)}.service" ]
+          )
+        ) refreshOrder
+      );
+
+      applyChain = lib.mapAttrs (
+        name: svc: svc // { after = (svc.after or [ ]) ++ (chainAfter.${name} or [ ]); }
+      );
     in
     {
       options.my.nixos.atlasRefreshJobs.overrides = lib.mkOption {
@@ -99,7 +112,7 @@
 
       config = {
         systemd = lib.recursiveUpdate {
-          services = {
+          services = applyChain {
             atlas-client-list-refresh-dev = mkService {
               description = "Project Atlas: refresh client list replica and publish (dev)";
               script = clientListRefreshScript "dev";
@@ -143,13 +156,18 @@
             };
           };
 
-          timers = {
-            atlas-map-refresh = mkTimer "00:00:00";
-            atlas-conflict-checks-refresh-dev = mkTimer "01:00:00";
-            atlas-conflict-checks-refresh-prd = mkTimer "01:30:00";
-            atlas-client-list-refresh-dev = mkTimer "02:00:00";
-            atlas-client-list-refresh-prd = mkTimer "03:00:00";
-            atlas-elm-refresh = mkTimer "04:00:00";
+          targets.atlas-refresh = {
+            description = "Project Atlas: all refresh jobs";
+            wants = map (n: "${n}.service") refreshOrder;
+          };
+
+          timers.atlas-refresh = {
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = "*-*-* 00:00:00 America/Chicago";
+              Persistent = true;
+              Unit = "atlas-refresh.target";
+            };
           };
         } cfg.overrides;
       };
