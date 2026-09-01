@@ -18,7 +18,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     import-tree.url = "github:vic/import-tree";
-    milliman-timesheet-cli.url = "git+ssh://git@github.com/Milliman-CMHH/milliman-timesheet-cli.git?ref=refs/tags/v0.1.0";
+    milliman-timesheet-cli.url = "git+ssh://git@github.com/Milliman-CMHH/milliman-timesheet-cli.git";
     nixos-wsl = {
       url = "github:nix-community/nixos-wsl";
       inputs.nixpkgs.follows = "nixpkgs";

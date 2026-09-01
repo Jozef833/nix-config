@@ -32,7 +32,7 @@
         url = lib.mkDefault "github:vic/import-tree";
       };
       milliman-timesheet-cli = {
-        url = "git+ssh://git@github.com/Milliman-CMHH/milliman-timesheet-cli.git?ref=refs/tags/v0.1.0";
+        url = "git+ssh://git@github.com/Milliman-CMHH/milliman-timesheet-cli.git";
       };
       nixos-wsl = {
         url = lib.mkDefault "github:nix-community/nixos-wsl";
