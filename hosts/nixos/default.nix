@@ -377,9 +377,9 @@ in
                         acli.unwrapped
                         (writeShellScriptBin "claude-foundry" ''
                           set -euo pipefail
-                          export ANTHROPIC_DEFAULT_FABLE_MODEL="''${ANTHROPIC_DEFAULT_FABLE_MODEL:-claude-fable-5}"
+                          export ANTHROPIC_DEFAULT_FABLE_MODEL="''${ANTHROPIC_DEFAULT_FABLE_MODEL:-claude-fable-5[1m]}"
                           export ANTHROPIC_DEFAULT_HAIKU_MODEL="''${ANTHROPIC_DEFAULT_HAIKU_MODEL:-claude-haiku-4-5}"
-                          export ANTHROPIC_DEFAULT_OPUS_MODEL="''${ANTHROPIC_DEFAULT_OPUS_MODEL:-claude-opus-5}"
+                          export ANTHROPIC_DEFAULT_OPUS_MODEL="''${ANTHROPIC_DEFAULT_OPUS_MODEL:-claude-opus-5[1m]}"
                           export ANTHROPIC_DEFAULT_SONNET_MODEL="''${ANTHROPIC_DEFAULT_SONNET_MODEL:-claude-sonnet-5}"
                           ANTHROPIC_FOUNDRY_API_KEY="$(cat /run/secrets/azure-foundry-api-key)"
                           export ANTHROPIC_FOUNDRY_API_KEY
