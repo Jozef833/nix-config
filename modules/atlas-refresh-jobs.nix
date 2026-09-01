@@ -159,6 +159,22 @@
           targets.atlas-refresh = {
             description = "Project Atlas: all refresh jobs";
             wants = map (n: "${n}.service") refreshOrder;
+
+            # Per systemd.target(5), a target with DefaultDependencies=yes implicitly
+            # gains After= on everything it Wants=. That makes this target's *start job*
+            # block until the entire refresh chain finishes (up to 6 x TimeoutStartSec).
+            #
+            # switch-to-configuration puts every active/activating target into
+            # /run/nixos/start-list, submits a StartUnit job for each, and then blocks on
+            # the JobRemoved D-Bus signal for all of them. So if this target happens to be
+            # activating during a rebuild (e.g. the Persistent=true timer below firing for
+            # a missed window), `nixos-rebuild switch` hangs for as long as the refresh
+            # chain runs -- which is forever if a job is stuck on interactive auth.
+            #
+            # DefaultDependencies=no drops that implicit ordering: the target activates
+            # immediately, the services still get pulled in via Wants= and run in the
+            # background, and the rebuild is never held hostage by a data refresh.
+            unitConfig.DefaultDependencies = false;
           };
 
           timers.atlas-refresh = {
