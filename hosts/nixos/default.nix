@@ -322,7 +322,7 @@ in
                     "claude-haiku-4-5"
                   ] azureFoundryClaudeDeployments;
                   azureFoundryClaudeDeployments = [
-                    "claude-fable-5"
+                    "claude-fable-5-1"
                     "claude-haiku-4-5"
                     "claude-opus-5"
                     "claude-sonnet-5"
@@ -382,7 +382,7 @@ in
                         acli.unwrapped
                         (writeShellScriptBin "claude-foundry" ''
                           set -euo pipefail
-                          export ANTHROPIC_DEFAULT_FABLE_MODEL="''${ANTHROPIC_DEFAULT_FABLE_MODEL:-claude-fable-5[1m]}"
+                          export ANTHROPIC_DEFAULT_FABLE_MODEL="''${ANTHROPIC_DEFAULT_FABLE_MODEL:-claude-fable-5-1[1m]}"
                           export ANTHROPIC_DEFAULT_HAIKU_MODEL="''${ANTHROPIC_DEFAULT_HAIKU_MODEL:-claude-haiku-4-5}"
                           export ANTHROPIC_DEFAULT_OPUS_MODEL="''${ANTHROPIC_DEFAULT_OPUS_MODEL:-claude-opus-5[1m]}"
                           export ANTHROPIC_DEFAULT_SONNET_MODEL="''${ANTHROPIC_DEFAULT_SONNET_MODEL:-claude-sonnet-5}"
@@ -407,16 +407,16 @@ in
                         };
                         overrides = {
                           model = {
-                            "grok-4.3" = {
+                            "grok-4.6" = {
                               api_backend = "chat_completions";
                               base_url = "https://eastus2.api.cognitive.microsoft.com/openai/v1";
                               env_key = "AZURE_FOUNDRY_API_KEY";
-                              model = "grok-4.3";
-                              name = "Grok 4.3";
+                              model = "grok-4.6";
+                              name = "Grok 4.6";
                             };
                           };
                           models = {
-                            default = "grok-4.3";
+                            default = "grok-4.6";
                           };
                           skills = {
                             disabled = [
@@ -429,7 +429,7 @@ in
                             ];
                           };
                           ui = {
-                            fork_secondary_model = "grok-4.3";
+                            fork_secondary_model = "grok-4.6";
                           };
                         };
                       };
@@ -535,6 +535,15 @@ in
                                     tool_call = true;
                                   };
                                   "gpt-5.6-terra" = {
+                                    attachment = true;
+                                    provider = {
+                                      npm = "@ai-sdk/openai";
+                                    };
+                                    reasoning = true;
+                                    temperature = false;
+                                    tool_call = true;
+                                  };
+                                  "gpt-6-astra" = {
                                     attachment = true;
                                     provider = {
                                       npm = "@ai-sdk/openai";
