@@ -37,6 +37,18 @@ in
           };
 
           fileSystems = {
+            "/mnt/cmh-mem-repo/cm" = {
+              device = "\\\\cmh-mem-repo.milliman.com\\cm";
+              fsType = "drvfs";
+              options = [
+                "uid=1000"
+                "gid=100"
+                "nofail" # don't block boot if share is unreachable
+                "x-systemd.automount" # mount on first access, not at boot
+                "x-systemd.idle-timeout=60"
+              ];
+            };
+
             "/mnt/h" = {
               device = "H:";
               fsType = "drvfs";
@@ -358,13 +370,6 @@ in
                                   "playwright"
                                 ] config.programs.mcp.servers
                               );
-                          settings = {
-                            apiKeyHelper = "cat /run/secrets/anthropic-api-key";
-                            env = {
-                              DISABLE_LOGIN_COMMAND = 1;
-                              DISABLE_LOGOUT_COMMAND = 1;
-                            };
-                          };
                         };
                       };
 

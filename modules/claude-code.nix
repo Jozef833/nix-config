@@ -27,6 +27,7 @@
                 DISABLE_EXTRA_USAGE_COMMAND = 1;
                 DISABLE_INSTALL_GITHUB_APP_COMMAND = 1;
               };
+              forceLoginMethod = "claudeai";
               permissions = {
                 defaultMode = "bypassPermissions";
               };
