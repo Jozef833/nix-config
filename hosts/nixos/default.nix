@@ -466,6 +466,18 @@ in
                       opencode = {
                         overrides = {
                           settings = {
+                            disabled_providers = [
+                              "opencode"
+                            ];
+                            experimental = {
+                              policies = [
+                                {
+                                  action = "provider.use";
+                                  effect = "deny";
+                                  resource = "opencode";
+                                }
+                              ];
+                            };
                             provider = {
                               anthropic = {
                                 models = lib.genAttrs adaptiveThinkingModels (_: {
