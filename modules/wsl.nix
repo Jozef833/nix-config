@@ -71,6 +71,11 @@
         wsl = lib.recursiveUpdate {
           enable = true;
           defaultUser = config.my.nixos.primaryUser;
+          extraBin = [
+            {
+              src = "${pkgs.coreutils}/bin/uname";
+            }
+          ];
           useWindowsDriver = true;
         } config.my.nixos.wsl.overrides;
       };
