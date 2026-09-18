@@ -20,7 +20,6 @@ let
     secretspec
     ssh
     ungoogled-chromium
-    zed-editor
   ];
 in
 {
@@ -334,29 +333,6 @@ in
                       type = "adaptive";
                     };
                   };
-                  # can_shader_image_load_all_formats() (d3d12_screen.cpp) demands typed
-                  # UAV load+store on the 21 formats ARB_shader_image_load_store
-                  # mandates. The UHD 770 reports UAV_TYPED_LOAD=NO for
-                  # R10G10B10A2_UNORM/UINT and R11G11B10_FLOAT. The D3D12 spec lists
-                  # those as "optionally and individually supported", so this is
-                  # conformant -- a driver update will not change it.
-                  #
-                  # Mesa therefore drops ARB_shader_image_load_store, which cascades to
-                  # ARB_compute_shader (st_extensions.c gates the latter on the former),
-                  # capping GL at 4.1 / GLES at 3.0. wgpu needs compute, so Zed rejects
-                  # the GPU for llvmpipe. Dropping the three formats gives GL 4.2 /
-                  # GLES 3.1 and a GPU-backed Zed.
-                  #
-                  # imageLoad on rgb10_a2 / r11f_g11f_b10f is unreliable as a result, so
-                  # this is scoped to Zed rather than hardware.graphics.package.
-                  mesaD3d12ShaderImages = pkgs.mesa.overrideAttrs (old: {
-                    postPatch = (old.postPatch or "") + ''
-                      substituteInPlace src/gallium/drivers/d3d12/d3d12_screen.cpp \
-                        --replace-fail "DXGI_FORMAT_R10G10B10A2_UNORM," "" \
-                        --replace-fail "DXGI_FORMAT_R10G10B10A2_UINT," "" \
-                        --replace-fail "DXGI_FORMAT_R11G11B10_FLOAT," ""
-                    '';
-                  });
                   signingKey = "/run/secrets/ssh-github";
                 in
                 {
@@ -634,35 +610,6 @@ in
                       };
 
                       stateVersion = "25.05";
-
-                      zed-editor = {
-                        overrides = {
-                          # Wrap bin/zeditor rather than libexec/zed-editor: the CLI
-                          # resolves the GUI binary via its own real path, which points
-                          # back into the unwrapped store path. Setting the variable on
-                          # the CLI has it inherited by whichever GUI binary is spawned.
-                          # meta/passthru must be carried over because home-manager reads
-                          # mainProgram, remote_server and remoteServerExecutableName
-                          # off this package.
-                          package = pkgs.symlinkJoin {
-                            name = "zed-editor-d3d12-${lib.getVersion pkgs.zed-editor}";
-                            paths = [ pkgs.zed-editor ];
-                            preferLocalBuild = true;
-                            nativeBuildInputs = [ pkgs.makeWrapper ];
-                            postBuild = ''
-                              wrapProgram $out/bin/zeditor \
-                                --prefix LD_LIBRARY_PATH : ${mesaD3d12ShaderImages}/lib
-                            '';
-                            inherit (pkgs.zed-editor) meta;
-                            # remote_server and remoteServerExecutableName sit directly
-                            # on the derivation rather than in passthru, so they need
-                            # naming explicitly or installRemoteServer silently no-ops.
-                            passthru = pkgs.zed-editor.passthru // {
-                              inherit (pkgs.zed-editor) remote_server remoteServerExecutableName;
-                            };
-                          };
-                        };
-                      };
                     };
                   };
                 };
