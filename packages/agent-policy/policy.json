@@ -33,7 +33,7 @@
       "match": [
         {
           "command": ["du", "fd", "find", "rg", "tree"],
-          "args": "(^| )/( |$)|(^| )/nix(/[^ ]*)?( |$)"
+          "arg": "^/+$|^/nix(/store)?/*$|^/nix/store/[^/]*[*?[]"
         }
       ],
       "message": "agent-policy: a traversal rooted at / or the nix store enumerates an enormous tree. Resolve instead: readlink -f \"$(command -v <bin>)\" for a binary's store path; nix eval nixpkgs#<pkg>.outPath for a package; nix-locate <file> for file-to-package. Otherwise pick a reasoned, specific root — and if a broad scan is truly unavoidable, bound it hard: timeout 5 <cmd> ... with a -maxdepth."
@@ -42,16 +42,16 @@
       "match": [
         {
           "command": "grep",
-          "args": [
-            "(^| )-[a-zA-Z]*[rR]|(^| )--(dereference-)?recursive( |$)",
-            "(^| )/( |$)|(^| )/nix(/[^ ]*)?( |$)"
+          "arg": [
+            "^-[a-zA-Z]*[rR]|^--(dereference-)?recursive$",
+            "^/+$|^/nix(/store)?/*$|^/nix/store/[^/]*[*?[]"
           ]
         }
       ],
       "message": "agent-policy: recursive grep from / or the nix store reads an enormous tree. Resolve the location first (readlink -f, nix eval, nix-locate), then search a reasoned root — and if a broad scan is truly unavoidable, bound it hard: timeout 5 grep ... with a narrower root."
     },
     {
-      "match": [{ "command": ["du", "fd", "find", "rg", "tree"], "args": "(^| )/mnt/" }],
+      "match": [{ "command": ["du", "fd", "find", "rg", "tree"], "arg": "^/mnt(/|$)" }],
       "message": "agent-policy: /mnt/* paths are slow network/Windows mounts where every directory read is a round trip. Bound any search there hard — a few seconds already covers enormous ground: timeout 5 <cmd> ... with -maxdepth 3 or less from a deep, specific root (e.g. timeout 5 find /mnt/<share>/<dir> -maxdepth 2 -iname '*<term>*'), or ls the target directory first to orient."
     },
     {
@@ -80,10 +80,8 @@
       "match": [
         {
           "command": ["grep", "rg"],
-          "args": [
-            "(^| )-[a-zA-Z]*v|--invert-match",
-            "\\.git(/|['\"]|$| )|node_modules|\\.venv|site-packages|__pycache__|\\.direnv"
-          ]
+          "arg": "^-[a-zA-Z]*v|^--invert-match$",
+          "args": "\\.git(/|['\"]|$| )|node_modules|\\.venv|site-packages|__pycache__|\\.direnv"
         }
       ],
       "message": "agent-policy: inverting out .git/, node_modules, .venv, site-packages, __pycache__ or .direnv is an admission that a traversal already walked them -- the filter hides the output, not the cost, and whatever else those trees hold (vendored source, cached data) still lands in context on the way past. Skip them at the producer, not after it: git -C <dir> ls-files for one repo; rg --files or fd for a directory of many, since both honor .gitignore and never descend .git; find must -prune the subtree rather than post-filter it. Deliberately untracked target: git ls-files --others --ignored --exclude-standard. If this stream is genuinely not a traversal -- a build log, a saved file list -- narrow it at the source instead of inverting here."

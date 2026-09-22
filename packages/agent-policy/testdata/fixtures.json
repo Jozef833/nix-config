@@ -1,17 +1,17 @@
 [
   {
     "name": "readme-1-find-from-root",
-    "command": "find / -maxdepth 6 -iname \"*openclaw*\" -type d 2>/dev/null | grep -v \"^/proc\" | head -30",
+    "command": "find / -maxdepth 6 -iname \"*sometool*\" -type d 2>/dev/null | grep -v \"^/proc\" | head -30",
     "expect": "deny"
   },
   {
     "name": "readme-2-ci-poll-loop",
-    "command": "cd /home/nixos/Documents/personal/repositories/Project-Atlas && for i in 1 2 3 4 5 6 7 8; do\n  sleep 20\n  out=$(gh run view 29855311448 --json status,conclusion 2>&1)\n  status=$(echo \"$out\" | python3 -c \"import json,sys; d=json.load(sys.stdin); print(d['status'])\")\n  echo \"$(date +%T) $out\"\n  if [ \"$status\" = \"completed\" ]; then break; fi\ndone",
+    "command": "cd /home/user/repositories/example-repo && for i in 1 2 3 4 5 6 7 8; do\n  sleep 20\n  out=$(gh run view 12345 --json status,conclusion 2>&1)\n  status=$(echo \"$out\" | python3 -c \"import json,sys; d=json.load(sys.stdin); print(d['status'])\")\n  echo \"$(date +%T) $out\"\n  if [ \"$status\" = \"completed\" ]; then break; fi\ndone",
     "expect": "deny"
   },
   {
     "name": "readme-3-network-find",
-    "command": "cd \"/mnt/t/SOME DEPARTMENT\" && find . -maxdepth 4 \\( -iname \"*bonus*\" -o -iname \"*billing*polic*\" -o -iname \"*z-code*\" \\) -not -name \"~\\$*\" 2>/dev/null | head -60",
+    "command": "cd \"/mnt/t/SHARED DIR\" && find . -maxdepth 4 \\( -iname \"*report*\" -o -iname \"*draft*v2*\" -o -iname \"*notes*\" \\) -not -name \"~\\$*\" 2>/dev/null | head -60",
     "expect": "deny"
   },
   {
@@ -46,12 +46,12 @@
   },
   {
     "name": "shallow-network-find",
-    "command": "find /mnt/t/MISC -iname '*bonus*'",
+    "command": "find /mnt/t/MISC -iname '*report*'",
     "expect": "deny"
   },
   {
     "name": "unpruned-repo-find",
-    "command": "find /home/nixos/Documents/personal/repositories/atlas -name settings.py",
+    "command": "find /home/user/repositories/example-repo -name settings.py",
     "expect": "deny"
   },
   {
@@ -91,17 +91,17 @@
   },
   {
     "name": "pruned-repo-find",
-    "command": "find /home/nixos/Documents/personal/repositories/atlas -name settings.py -not -path '*/.venv/*'",
+    "command": "find /home/user/repositories/example-repo -name settings.py -not -path '*/.venv/*'",
     "expect": "allow"
   },
   {
     "name": "depth-only-network-find",
-    "command": "find /mnt/t/MISC/ClientX/2026 -maxdepth 2 -iname '*bonus*'",
+    "command": "find /mnt/t/MISC/projects/example -maxdepth 2 -iname '*report*'",
     "expect": "deny"
   },
   {
     "name": "bounded-network-find",
-    "command": "timeout 5 find /mnt/t/MISC/ClientX/2026 -maxdepth 2 -iname '*bonus*'",
+    "command": "timeout 5 find /mnt/t/MISC/projects/example -maxdepth 2 -iname '*report*'",
     "expect": "allow"
   },
   {
@@ -207,6 +207,81 @@
   {
     "name": "grep-single-file-no-recursion-allowed",
     "command": "grep -n wslconfig /mnt/c/Users/me/.wslconfig",
+    "expect": "allow"
+  },
+  {
+    "name": "recursive-grep-pattern-containing-slash-allowed",
+    "command": "grep -rn \"foo (alpha / beta), gamma\" --include=*.md docs | head -3",
+    "expect": "allow"
+  },
+  {
+    "name": "rg-pattern-containing-slash-allowed",
+    "command": "rg -n \"foo \\(alpha / beta\\), gamma\" docs | head -3",
+    "expect": "allow"
+  },
+  {
+    "name": "rg-pattern-mentioning-mnt-allowed",
+    "command": "rg -n 'see /mnt/ for mounts' docs",
+    "expect": "allow"
+  },
+  {
+    "name": "rg-pattern-mentioning-nix-store-allowed",
+    "command": "rg -n 'lives in /nix/store' docs",
+    "expect": "allow"
+  },
+  {
+    "name": "rg-inside-resolved-store-path-allowed",
+    "command": "rg -n 'needle' /nix/store/00000000000000000000000000000000-example-1.0/share",
+    "expect": "allow"
+  },
+  {
+    "name": "recursive-grep-inside-resolved-store-path-allowed",
+    "command": "grep -rn needle /nix/store/00000000000000000000000000000000-example-1.0/share",
+    "expect": "allow"
+  },
+  {
+    "name": "store-enumeration-trailing-slash",
+    "command": "fd python /nix/store/",
+    "expect": "deny"
+  },
+  {
+    "name": "store-glob-enumeration",
+    "command": "find /nix/store/*python* -name site.py",
+    "expect": "deny"
+  },
+  {
+    "name": "rg-from-root",
+    "command": "rg -l secret /",
+    "expect": "deny"
+  },
+  {
+    "name": "recursive-grep-long-flag-from-nix",
+    "command": "grep --recursive needle /nix",
+    "expect": "deny"
+  },
+  {
+    "name": "find-root-in-for-loop-header",
+    "command": "for f in $(find / -name '*.conf'); do echo \"$f\"; done",
+    "expect": "deny"
+  },
+  {
+    "name": "find-root-in-test-clause",
+    "command": "[[ -n $(find / -name foo) ]] && echo found",
+    "expect": "deny"
+  },
+  {
+    "name": "find-root-in-parameter-default",
+    "command": "echo \"${HIT:-$(find / -name foo)}\"",
+    "expect": "deny"
+  },
+  {
+    "name": "find-root-in-array-assignment",
+    "command": "files=( $(find / -name '*.conf') )",
+    "expect": "deny"
+  },
+  {
+    "name": "grep-v-pattern-with-dash-v-inside-not-a-flag",
+    "command": "rg -n 'try -v to skip node_modules' docs/tips.md",
     "expect": "allow"
   }
 ]

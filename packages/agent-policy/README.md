@@ -43,7 +43,7 @@ modeling stay deleted.
 
 ```json
 {
-  "match":   [{ "command": ["find", "fd"], "args": "(^| )/mnt/" }],
+  "match":   [{ "command": ["find", "fd"], "arg": "^/mnt/" }],
   "unless":  [{ "args": "-maxdepth [1-3]( |$)" }],
   "scope":   "command",
   "message": "why this is denied and what to do instead"
@@ -55,6 +55,9 @@ modeling stay deleted.
 - `args`: RE2 regex (string or list = all-must-match) over the remaining
   argv joined with spaces. Literal words are unquoted/unescaped; expansions
   keep their source text (`$VAR`, `$(cmd)`).
+- `arg`: RE2 regex (string or list) where each regex must match some
+  *single* argument on its own. Use it for paths and flags: joined `args`
+  text cannot tell the path `/` from a quoted pattern like `"a / b"`.
 - `scope`: how close together multiple matchers must co-occur — `command`
   (same simple command; default for one matcher), `loop` (same loop body),
   `script` (anywhere; default for several matchers).

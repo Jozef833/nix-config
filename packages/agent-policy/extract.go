@@ -11,14 +11,15 @@ import (
 // tags loop membership. What any other binary's flags mean is the rules'
 // business.
 
-// subcmd is one simple command: its argv[0] and the remaining argv joined
-// with spaces for regex matching. Words built purely from literals are
+// subcmd is one simple command: its argv[0], the remaining argv joined with
+// spaces for regex matching, and those same words kept separate (argv). Words built purely from literals are
 // unquoted/unescaped; expansions keep their source text ($VAR, $(cmd), ...)
 // so rules match what the author wrote.
 type subcmd struct {
 	name    string
 	nameLit bool
 	args    string
+	argv    []string
 }
 
 type analysis struct {
@@ -62,7 +63,7 @@ func (w *walker) stmt(s *syntax.Stmt) {
 	}
 	for _, r := range s.Redirs {
 		if r.Word != nil {
-			w.wordParts(r.Word.Parts)
+			w.substs(r.Word)
 		}
 	}
 	w.command(s.Cmd)
@@ -91,12 +92,14 @@ func (w *walker) command(cmd syntax.Command) {
 			w.stmts(x.Do)
 		})
 	case *syntax.ForClause:
+		// The iteration words run once, before the body: outside loop scope.
+		w.substs(x.Loop)
 		w.loop(func() {
 			w.stmts(x.Do)
 		})
 	case *syntax.CaseClause:
 		if x.Word != nil {
-			w.wordParts(x.Word.Parts)
+			w.substs(x.Word)
 		}
 		for _, item := range x.Items {
 			w.stmts(item.Stmts)
@@ -109,10 +112,10 @@ func (w *walker) command(cmd syntax.Command) {
 		w.stmt(x.Stmt)
 	case *syntax.DeclClause:
 		for _, as := range x.Args {
-			if as.Value != nil {
-				w.wordParts(as.Value.Parts)
-			}
+			w.substs(as)
 		}
+	case *syntax.TestClause, *syntax.ArithmCmd, *syntax.LetClause:
+		w.substs(x)
 	}
 }
 
@@ -126,13 +129,11 @@ func (w *walker) loop(body func()) {
 
 func (w *walker) call(x *syntax.CallExpr) {
 	for _, as := range x.Assigns {
-		if as.Value != nil {
-			w.wordParts(as.Value.Parts)
-		}
+		w.substs(as)
 	}
 	var argv []arg
 	for _, word := range x.Args {
-		w.wordParts(word.Parts)
+		w.substs(word)
 		argv = append(argv, w.wordToArg(word))
 	}
 	if len(argv) == 0 {
@@ -141,23 +142,29 @@ func (w *walker) call(x *syntax.CallExpr) {
 	w.emit(argv)
 }
 
-// wordParts walks nested command substitutions so commands inside $(...),
-// <(...), and "..." are analyzed too.
-func (w *walker) wordParts(parts []syntax.WordPart) {
-	for _, p := range parts {
-		switch y := p.(type) {
+// substs analyzes every command nested in node via $(...), <(...), or
+// backquotes -- inside quotes, parameter expansions, arrays, arithmetic, and
+// [[ ]] tests alike.
+func (w *walker) substs(node syntax.Node) {
+	syntax.Walk(node, func(n syntax.Node) bool {
+		switch y := n.(type) {
 		case *syntax.CmdSubst:
 			w.stmts(y.Stmts)
+			return false
 		case *syntax.ProcSubst:
 			w.stmts(y.Stmts)
-		case *syntax.DblQuoted:
-			w.wordParts(y.Parts)
+			return false
 		}
-	}
+		return true
+	})
 }
 
 func (w *walker) emit(argv []arg) {
-	cmd := subcmd{name: argv[0].text, nameLit: argv[0].literal, args: joinArgs(argv[1:])}
+	rest := make([]string, len(argv)-1)
+	for i, a := range argv[1:] {
+		rest[i] = a.text
+	}
+	cmd := subcmd{name: argv[0].text, nameLit: argv[0].literal, args: strings.Join(rest, " "), argv: rest}
 	w.res.commands = append(w.res.commands, cmd)
 	for _, acc := range w.loopStack {
 		*acc = append(*acc, cmd)
@@ -167,14 +174,6 @@ func (w *walker) emit(argv []arg) {
 type arg struct {
 	text    string
 	literal bool
-}
-
-func joinArgs(argv []arg) string {
-	parts := make([]string, len(argv))
-	for i, a := range argv {
-		parts[i] = a.text
-	}
-	return strings.Join(parts, " ")
 }
 
 func (w *walker) wordToArg(word *syntax.Word) arg {

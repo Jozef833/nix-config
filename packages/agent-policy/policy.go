@@ -31,12 +31,16 @@ type Rule struct {
 }
 
 // Matcher: Command matches argv[0] exactly (any of the listed names);
-// Args regexes (RE2) must all match the remaining argv joined with spaces.
-// Either field may be omitted, not both.
+// Args regexes (RE2) must all match the remaining argv joined with spaces;
+// Arg regexes must each match some single argument on its own, so a quoted
+// pattern like "a / b" is never mistaken for the path "/". At least one
+// field is required.
 type Matcher struct {
+	Arg     StringList `json:"arg,omitempty"`
 	Args    StringList `json:"args,omitempty"`
 	Command StringList `json:"command,omitempty"`
 
+	argRes  []*regexp.Regexp
 	argsRes []*regexp.Regexp
 }
 
@@ -95,19 +99,30 @@ func (p *Policy) validate() error {
 		for _, set := range [][]Matcher{r.Match, r.Unless} {
 			for j := range set {
 				m := &set[j]
-				if len(m.Command) == 0 && len(m.Args) == 0 {
-					return fmt.Errorf("rule %d: matcher needs command or args", i+1)
+				if len(m.Command) == 0 && len(m.Args) == 0 && len(m.Arg) == 0 {
+					return fmt.Errorf("rule %d: matcher needs command, args, or arg", i+1)
 				}
-				m.argsRes = nil
-				for _, expr := range m.Args {
-					re, err := regexp.Compile(expr)
-					if err != nil {
-						return fmt.Errorf("rule %d: args regex %q: %w", i+1, expr, err)
-					}
-					m.argsRes = append(m.argsRes, re)
+				var err error
+				if m.argsRes, err = compileAll(m.Args); err != nil {
+					return fmt.Errorf("rule %d: args %w", i+1, err)
+				}
+				if m.argRes, err = compileAll(m.Arg); err != nil {
+					return fmt.Errorf("rule %d: arg %w", i+1, err)
 				}
 			}
 		}
 	}
 	return nil
+}
+
+func compileAll(exprs []string) ([]*regexp.Regexp, error) {
+	var res []*regexp.Regexp
+	for _, expr := range exprs {
+		re, err := regexp.Compile(expr)
+		if err != nil {
+			return nil, fmt.Errorf("regex %q: %w", expr, err)
+		}
+		res = append(res, re)
+	}
+	return res, nil
 }

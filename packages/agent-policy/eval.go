@@ -1,6 +1,9 @@
 package main
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
 
 type Verdict struct {
 	Action  string `json:"action"`
@@ -62,7 +65,21 @@ func satisfied(m *Matcher, c *subcmd) bool {
 			return false
 		}
 	}
+	for _, re := range m.argRes {
+		if !anyMatch(re, c.argv) {
+			return false
+		}
+	}
 	return true
+}
+
+func anyMatch(re *regexp.Regexp, list []string) bool {
+	for _, s := range list {
+		if re.MatchString(s) {
+			return true
+		}
+	}
+	return false
 }
 
 func allSatisfiedBy(ms []Matcher, c *subcmd) bool {
