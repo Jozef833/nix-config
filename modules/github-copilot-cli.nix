@@ -13,7 +13,7 @@
       config = {
         home = {
           file = {
-            "${configDir}/config.json" = {
+            "${configDir}/settings.json" = {
               force = true;
             };
           };
