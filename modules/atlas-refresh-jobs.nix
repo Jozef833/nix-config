@@ -57,14 +57,16 @@
           *) why="Result: ''${MONITOR_SERVICE_RESULT:-unknown}" ;;
         esac
         lastError=""
+        nl=$'\n'
         if [[ -n ''${MONITOR_INVOCATION_ID:-} ]]; then
           lastError="$(${pkgs.systemd}/bin/journalctl --no-pager -o cat _SYSTEMD_INVOCATION_ID="$MONITOR_INVOCATION_ID" \
             | ${pkgs.gnused}/bin/sed 's/\x1b\[[0-9;]*m//g' \
-            | ${pkgs.gnugrep}/bin/grep -iE 'error|exception|failed' | ${pkgs.gnugrep}/bin/grep -v '^WARNING' \
-            | ${pkgs.coreutils}/bin/tail -n1)"
+            | ${pkgs.gnugrep}/bin/grep -iE 'error|exception|failed' | ${pkgs.gnugrep}/bin/grep -vE '^WARNING|<' \
+            | ${pkgs.coreutils}/bin/tail -n1 | ${pkgs.coreutils}/bin/cut -c1-160)"
         fi
+        # Toasts show at most three text lines, so the error goes first.
         exec ${notify} "$unit" "Atlas refresh failed: $unit" \
-          "Rerun: sudo systemctl start $unit"$'\n'"$why. ''${lastError:+$lastError }Logs: journalctl -eu $unit"
+          "''${lastError:+$lastError$nl}$why. Logs: journalctl -eu $unit"
       '';
 
       mapRefreshScript = mkRefreshScript "atlas-map-refresh" "project-scout/map" (
@@ -133,13 +135,20 @@
         set -uo pipefail
         unit="''${1%.service}"
         shift
+        signInRe='[Ss]ign in with your ([^[:space:]]+) account( \(([^)]*)\))?'
+        account=""
+        nl=$'\n'
         "$@" 2>&1 | while IFS= read -r line || [[ -n $line ]]; do
           printf '%s\n' "$line"
-          if [[ $line =~ (https://[^[:space:]]+).*enter\ (the\ )?code\ ([A-Z0-9]+) ]]; then
+          if [[ $line =~ $signInRe ]]; then
+            account="''${BASH_REMATCH[1]}''${BASH_REMATCH[3]:+ (''${BASH_REMATCH[3]})}"
+          elif [[ $line =~ (https://[^[:space:]]+).*enter\ (the\ )?code\ ([A-Z0-9]+) ]]; then
             url="''${BASH_REMATCH[1]}"
             code="''${BASH_REMATCH[3]}"
-            ${notify} "$unit" "Atlas sign-in needed: $unit" "Enter code $code at $url"$'\n'"Expires in ~15 min; a new code follows if missed." "$url" \
+            ${notify} "$unit" "Atlas sign-in needed: $unit" \
+              "''${account:+Sign in as $account$nl}Enter code $code at $url (expires ~15 min; a new code follows if missed)" "$url" \
               </dev/null >/dev/null 2>&1 &
+            account=""
           fi
         done
         exit "''${PIPESTATUS[0]}"
