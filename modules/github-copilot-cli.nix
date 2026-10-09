@@ -1,9 +1,6 @@
 {
   flake.modules.homeManager.github-copilot-cli =
     { config, lib, ... }:
-    let
-      configDir = config.programs.github-copilot-cli.configDir;
-    in
     {
       options.my.home.github-copilot-cli.overrides = lib.mkOption {
         type = lib.types.attrs;
@@ -11,20 +8,19 @@
       };
 
       config = {
-        home = {
-          file = {
-            "${configDir}/settings.json" = {
-              force = true;
-            };
-          };
-        };
-
         programs = {
           github-copilot-cli = lib.recursiveUpdate {
             enable = true;
             enableMcpIntegration = true;
+            mutableSettings = true;
             settings = {
               autoUpdate = false;
+              defaultPermissionMode = "allow-all";
+              disabledSkills = [
+                "customize-cloud-agent"
+                "github-pr-media"
+              ];
+              editorMode = "vim";
               includeCoAuthoredBy = false;
               theme = "dark";
             };

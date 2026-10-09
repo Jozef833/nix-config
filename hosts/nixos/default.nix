@@ -271,6 +271,12 @@ in
               ageKeyFile = "/home/${config.my.nixos.primaryUser}/.config/sops/age/keys.txt";
               defaultSopsFile = inputs.self + "/hosts/nixos/secrets.yaml";
               secrets = {
+                "agiloft-elm-client-id" = {
+                  owner = config.my.nixos.primaryUser;
+                };
+                "agiloft-elm-client-secret" = {
+                  owner = config.my.nixos.primaryUser;
+                };
                 "anthropic-api-key" = {
                   owner = config.my.nixos.primaryUser;
                 };
