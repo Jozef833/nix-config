@@ -51,22 +51,38 @@
 
       failureNotify = pkgs.writeShellScript "atlas-refresh-failed" ''
         unit="''${1%.service}"
-        case "''${MONITOR_SERVICE_RESULT:-}" in
-          timeout) why="Timed out (likely stuck waiting on sign-in)" ;;
-          exit-code) why="Exited with status ''${MONITOR_EXIT_STATUS:-?}" ;;
-          *) why="Result: ''${MONITOR_SERVICE_RESULT:-unknown}" ;;
-        esac
-        lastError=""
+        grep=${pkgs.gnugrep}/bin/grep
+        tail=${pkgs.coreutils}/bin/tail
+        log=""
+        detail=""
         nl=$'\n'
         if [[ -n ''${MONITOR_INVOCATION_ID:-} ]]; then
-          lastError="$(${pkgs.systemd}/bin/journalctl --no-pager -o cat _SYSTEMD_INVOCATION_ID="$MONITOR_INVOCATION_ID" \
-            | ${pkgs.gnused}/bin/sed 's/\x1b\[[0-9;]*m//g' \
-            | ${pkgs.gnugrep}/bin/grep -iE 'error|exception|failed' | ${pkgs.gnugrep}/bin/grep -vE '^WARNING|<' \
-            | ${pkgs.coreutils}/bin/tail -n1 | ${pkgs.coreutils}/bin/cut -c1-160)"
+          log="$(${pkgs.systemd}/bin/journalctl --no-pager -o cat _SYSTEMD_INVOCATION_ID="$MONITOR_INVOCATION_ID" \
+            | ${pkgs.gnused}/bin/sed 's/\x1b\[[0-9;]*m//g')"
         fi
-        # Toasts show at most three text lines, so the error goes first.
+        case "''${MONITOR_SERVICE_RESULT:-}" in
+          timeout)
+            limit="$(${pkgs.systemd}/bin/systemctl show -P TimeoutStartUSec "$unit.service")"
+            # Only blame sign-in when this run actually printed a device-code prompt
+            # (same pattern runWithAuthWatch toasts on); otherwise show where it got to.
+            if $grep -qE 'https://[^[:space:]]+.*enter (the )?code [A-Z0-9]+' <<<"$log"; then
+              why="Timed out after ''${limit:-?} waiting on sign-in"
+              detail="$($grep -E 'enter (the )?code' <<<"$log" | $tail -n1)"
+            else
+              why="Timed out after ''${limit:-?}"
+              detail="$($grep -v '^[[:space:]]*$' <<<"$log" | $tail -n1)"
+            fi
+            ;;
+          exit-code)
+            why="Exited with status ''${MONITOR_EXIT_STATUS:-?}"
+            detail="$($grep -iE 'error|exception|failed' <<<"$log" | $grep -vE '^WARNING|<' | $tail -n1)"
+            ;;
+          *) why="Result: ''${MONITOR_SERVICE_RESULT:-unknown}" ;;
+        esac
+        detail="''${detail:0:160}"
+        # Toasts show at most three text lines, so the detail goes first.
         exec ${notify} "$unit" "Atlas refresh failed: $unit" \
-          "''${lastError:+$lastError$nl}$why. Logs: journalctl -eu $unit"
+          "''${detail:+$detail$nl}$why. Logs: journalctl -eu $unit"
       '';
 
       mapRefreshScript = mkRefreshScript "atlas-map-refresh" "project-scout/map" (
