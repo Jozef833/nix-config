@@ -111,7 +111,7 @@
           inherit description environment path;
           onFailure = [ "atlas-refresh-failed@%n.service" ];
           serviceConfig = {
-            ExecStart = "${runWithAuthWatch} %n ${pkgs.util-linux}/bin/flock ${repoPath} ${pkgs.devenv}/bin/devenv -q shell -- ${script}";
+            ExecStart = "${runWithAuthWatch} %n ${pkgs.util-linux}/bin/flock ${repoPath} ${config.nix.package}/bin/nix develop ${repoPath} --command ${script}";
             TimeoutStartSec = "2h";
             Type = "oneshot";
             User = user;
