@@ -6,6 +6,7 @@ let
     bash
     claude-code
     cli-microsoft365
+    codex
     direnv
     gh
     git
@@ -388,6 +389,27 @@ in
                       cli-microsoft365 = {
                         entraAppId = "cb24f20f-b696-4030-9f95-82b06b399c70";
                         entraTenantId = "e240d61e-61e3-4c9e-ab90-8644b2f4d2a9";
+                      };
+
+                      codex = {
+                        overrides = {
+                          settings = {
+                            model_providers = {
+                              github-copilot = {
+                                auth = {
+                                  args = [
+                                    "auth"
+                                    "token"
+                                    "--hostname"
+                                    "github.com"
+                                    "--user"
+                                    "Jozef833"
+                                  ];
+                                };
+                              };
+                            };
+                          };
+                        };
                       };
 
                       extras = with pkgs; [
