@@ -2,7 +2,6 @@
   flake.modules.nixos.atlas-refresh-jobs =
     {
       config,
-      inputs,
       lib,
       pkgs,
       ...
@@ -28,8 +27,6 @@
         mkRefreshScript "atlas-client-list-refresh-${env}" "atlas" [
           "dotnet run --project src/Atlas.ClientList.Refresh --configuration Release"
         ];
-
-      cliMicrosoft365 = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.cli-microsoft365;
 
       conflictChecksRefreshScript =
         env:
@@ -85,12 +82,9 @@
           "''${detail:+$detail$nl}$why. Logs: journalctl -eu $unit"
       '';
 
-      mapRefreshScript = mkRefreshScript "atlas-map-refresh" "project-scout/map" (
-        [
-          "pwsh -NoProfile -NonInteractive -File scripts/Invoke-MapRefresh.ps1 -UvTempPath /tmp/atlas-map-refresh"
-        ]
-        ++ publishToAllEnvironments "outputs/map.duckdb" "map.duckdb"
-      );
+      mapRefreshScript = mkRefreshScript "atlas-map-refresh" "atlas" [
+        "dotnet run --project src/Atlas.Map.Refresh --configuration Release"
+      ];
 
       mkRefreshScript =
         name: subdir: commands:
@@ -239,7 +233,6 @@
 
               atlas-map-refresh = mkService {
                 description = "Project Atlas: refresh MAP DuckDB and publish to dev and prd";
-                path = [ cliMicrosoft365 ];
                 script = mapRefreshScript;
               };
             }
