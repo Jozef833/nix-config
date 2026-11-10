@@ -53,26 +53,6 @@
           packages = [ package ];
         };
 
-        my = {
-          home = {
-            grok-build = {
-              hooks = {
-                PreToolUse = [
-                  {
-                    matcher = "Bash";
-                    hooks = [
-                      {
-                        type = "command";
-                        command = "${lib.getExe package} grok-hook --policy ${settings.policyFile}";
-                      }
-                    ];
-                  }
-                ];
-              };
-            };
-          };
-        };
-
         programs = {
           claude-code = {
             settings = {

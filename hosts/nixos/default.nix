@@ -6,12 +6,10 @@ let
     bash
     claude-code
     cli-microsoft365
-    codex
     direnv
     gh
     git
     github-copilot-cli
-    grok-build
     home
     lazygit
     mcp
@@ -259,10 +257,8 @@ in
                   allowUnfreePredicate =
                     pkg:
                     builtins.elem (lib.getName pkg) [
-                      "acli-unwrapped"
                       "claude-code"
                       "github-copilot-cli"
-                      "grok-build"
                     ];
                 };
               };
@@ -284,13 +280,13 @@ in
                 "atlas-elm-password" = {
                   owner = config.my.nixos.primaryUser;
                 };
+                "atlas-elm-rest-password" = {
+                  owner = config.my.nixos.primaryUser;
+                };
+                "atlas-elm-rest-username" = {
+                  owner = config.my.nixos.primaryUser;
+                };
                 "atlas-elm-username" = {
-                  owner = config.my.nixos.primaryUser;
-                };
-                "atlassian-api-key" = {
-                  owner = config.my.nixos.primaryUser;
-                };
-                "azure-foundry-api-key" = {
                   owner = config.my.nixos.primaryUser;
                 };
                 "samba-credentials" = {
@@ -331,15 +327,6 @@ in
                     "claude-opus-5-5"
                     "claude-sonnet-5-5"
                   ];
-                  azureFoundryAdaptiveDeployments = lib.subtractLists [
-                    "claude-haiku-4-5"
-                  ] azureFoundryClaudeDeployments;
-                  azureFoundryClaudeDeployments = [
-                    "claude-fable-5-1"
-                    "claude-haiku-4-5"
-                    "claude-opus-5-5"
-                    "claude-sonnet-5-5"
-                  ];
                   claudeThinkingOptions = {
                     thinking = {
                       display = "summarized";
@@ -377,9 +364,7 @@ in
                               )
                               (
                                 lib.getAttrs [
-                                  "atlassian"
                                   "exa"
-                                  "m365"
                                   "playwright"
                                 ] config.programs.mcp.servers
                               );
@@ -391,42 +376,7 @@ in
                         entraTenantId = "e240d61e-61e3-4c9e-ab90-8644b2f4d2a9";
                       };
 
-                      codex = {
-                        overrides = {
-                          settings = {
-                            model_providers = {
-                              github-copilot = {
-                                auth = {
-                                  args = [
-                                    "auth"
-                                    "token"
-                                    "--hostname"
-                                    "github.com"
-                                    "--user"
-                                    "Jozef833"
-                                  ];
-                                };
-                              };
-                            };
-                          };
-                        };
-                      };
-
                       extras = with pkgs; [
-                        acli.unwrapped
-                        (writeShellScriptBin "claude-foundry" ''
-                          set -euo pipefail
-                          export ANTHROPIC_DEFAULT_FABLE_MODEL="''${ANTHROPIC_DEFAULT_FABLE_MODEL:-claude-fable-5-1[1m]}"
-                          export ANTHROPIC_DEFAULT_HAIKU_MODEL="''${ANTHROPIC_DEFAULT_HAIKU_MODEL:-claude-haiku-4-5}"
-                          export ANTHROPIC_DEFAULT_OPUS_MODEL="''${ANTHROPIC_DEFAULT_OPUS_MODEL:-claude-opus-5-5[1m]}"
-                          export ANTHROPIC_DEFAULT_SONNET_MODEL="''${ANTHROPIC_DEFAULT_SONNET_MODEL:-claude-sonnet-5-5}"
-                          ANTHROPIC_FOUNDRY_API_KEY="$(cat /run/secrets/azure-foundry-api-key)"
-                          export ANTHROPIC_FOUNDRY_API_KEY
-                          export ANTHROPIC_FOUNDRY_BASE_URL="https://eastus2.api.cognitive.microsoft.com/anthropic"
-                          export CLAUDE_CODE_USE_FOUNDRY=1
-                          exec claude "$@"
-                        '')
-                        restish
                         wl-clipboard
                       ];
 
@@ -436,60 +386,9 @@ in
                         userName = "Jozef833";
                       };
 
-                      grok-build = {
-                        envFiles = {
-                          AZURE_FOUNDRY_API_KEY = "/run/secrets/azure-foundry-api-key";
-                        };
-                        overrides = {
-                          model = {
-                            "grok-4.6" = {
-                              api_backend = "chat_completions";
-                              base_url = "https://eastus2.api.cognitive.microsoft.com/openai/v1";
-                              env_key = "AZURE_FOUNDRY_API_KEY";
-                              model = "grok-4.6";
-                              name = "Grok 4.6";
-                            };
-                          };
-                          models = {
-                            default = "grok-4.6";
-                          };
-                          skills = {
-                            disabled = [
-                              "capacity"
-                              "customize"
-                              "deploy-model"
-                              "finetuning"
-                              "microsoft-foundry"
-                              "preset"
-                            ];
-                          };
-                          ui = {
-                            fork_secondary_model = "grok-4.6";
-                          };
-                        };
-                      };
-
                       mcp = {
                         overrides = {
                           servers = {
-                            atlassian = {
-                              disabled = true;
-                              url = "https://mcp.atlassian.com/v1/mcp";
-                            };
-                            context7 = {
-                              disabled = true;
-                              url = "https://mcp.context7.com/mcp";
-                            };
-                            m365 = {
-                              disabled = true;
-                              command = "${
-                                inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.cli-microsoft365-mcp-server
-                              }/bin/cli-microsoft365-mcp-server";
-                              env = {
-                                CLIMICROSOFT365_ENTRAAPPID = config.my.home.cli-microsoft365.entraAppId;
-                                CLIMICROSOFT365_TENANT = config.my.home.cli-microsoft365.entraTenantId;
-                              };
-                            };
                             microsoft-learn = {
                               disabled = true;
                               url = "https://learn.microsoft.com/api/mcp";
@@ -514,105 +413,6 @@ in
                               ];
                             };
                             provider = {
-                              anthropic = {
-                                models = lib.genAttrs adaptiveThinkingModels (_: {
-                                  options = claudeThinkingOptions;
-                                });
-                                options = {
-                                  apiKey = "{file:/run/secrets/anthropic-api-key}";
-                                };
-                              };
-                              "azure-foundry" = {
-                                models = lib.genAttrs azureFoundryClaudeDeployments (
-                                  deployment:
-                                  {
-                                    attachment = true;
-                                    name = deployment;
-                                    reasoning = true;
-                                    temperature = true;
-                                    tool_call = true;
-                                  }
-                                  // lib.optionalAttrs (lib.elem deployment azureFoundryAdaptiveDeployments) {
-                                    options = claudeThinkingOptions;
-                                  }
-                                );
-                                name = "Azure Foundry (Anthropic)";
-                                npm = "@ai-sdk/anthropic";
-                                options = {
-                                  apiKey = "{file:/run/secrets/azure-foundry-api-key}";
-                                  baseURL = "https://eastus2.api.cognitive.microsoft.com/anthropic/v1";
-                                };
-                              };
-                              "azure-foundry-openai" = {
-                                models = {
-                                  "DeepSeek-V4-Flash" = {
-                                    attachment = false;
-                                    reasoning = true;
-                                    temperature = true;
-                                    tool_call = true;
-                                  };
-                                  "DeepSeek-V4-Pro" = {
-                                    attachment = false;
-                                    reasoning = true;
-                                    temperature = true;
-                                    tool_call = true;
-                                  };
-                                  "gpt-4.1-nano" = {
-                                    attachment = true;
-                                    reasoning = false;
-                                    temperature = true;
-                                    tool_call = true;
-                                  };
-                                  "gpt-5.6-luna" = {
-                                    attachment = true;
-                                    provider = {
-                                      npm = "@ai-sdk/openai";
-                                    };
-                                    reasoning = true;
-                                    temperature = false;
-                                    tool_call = true;
-                                  };
-                                  "gpt-5.6-sol" = {
-                                    attachment = true;
-                                    provider = {
-                                      npm = "@ai-sdk/openai";
-                                    };
-                                    reasoning = true;
-                                    temperature = false;
-                                    tool_call = true;
-                                  };
-                                  "gpt-5.6-terra" = {
-                                    attachment = true;
-                                    provider = {
-                                      npm = "@ai-sdk/openai";
-                                    };
-                                    reasoning = true;
-                                    temperature = false;
-                                    tool_call = true;
-                                  };
-                                  "gpt-6-astra" = {
-                                    attachment = true;
-                                    provider = {
-                                      npm = "@ai-sdk/openai";
-                                    };
-                                    reasoning = true;
-                                    temperature = false;
-                                    tool_call = true;
-                                  };
-                                  "model-router" = {
-                                    attachment = true;
-                                    reasoning = true;
-                                    temperature = true;
-                                    tool_call = true;
-                                  };
-                                };
-                                name = "Azure Foundry (OpenAI-compatible)";
-                                npm = "@ai-sdk/openai-compatible";
-                                options = {
-                                  apiKey = "{file:/run/secrets/azure-foundry-api-key}";
-                                  baseURL = "https://eastus2.api.cognitive.microsoft.com/openai/v1";
-                                };
-                              };
                               "github-copilot" = {
                                 models = lib.genAttrs adaptiveThinkingModels (_: {
                                   options = claudeThinkingOptions;
@@ -657,6 +457,7 @@ in
       atlas-refresh-jobs
       base
       podman
+      workstation
       wsl
       xdg-portal
     ])

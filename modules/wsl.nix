@@ -73,6 +73,9 @@
           defaultUser = config.my.nixos.primaryUser;
           extraBin = [
             {
+              src = "${pkgs.coreutils}/bin/mkdir";
+            }
+            {
               src = "${pkgs.coreutils}/bin/uname";
             }
           ];

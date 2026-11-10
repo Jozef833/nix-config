@@ -19,7 +19,7 @@
 
           postPatch = ''
             rm -f npm-shrinkwrap.json
-            cp ${./cli-microsoft365-package-lock.json} package-lock.json
+            cp ${./package-lock.json} package-lock.json
           '';
 
           npmDepsHash = "sha256-vtdNULPQo6vafuoVFCKJqABcuOEqk6srdFf90aQnKvw=";
@@ -46,6 +46,16 @@
     }:
     let
       cliMicrosoft365 = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.cli-microsoft365;
+      teamsIndex = pkgs.writeShellApplication {
+        name = "teams-index";
+        excludeShellChecks = [ "SC2016" ];
+        runtimeInputs = [
+          cliMicrosoft365
+          pkgs.findutils
+          pkgs.jq
+        ];
+        text = builtins.readFile ./teams-index.sh;
+      };
     in
     {
       options.my.home.cli-microsoft365 = {
@@ -61,7 +71,10 @@
 
       config = {
         home = {
-          packages = [ cliMicrosoft365 ];
+          packages = [
+            cliMicrosoft365
+            teamsIndex
+          ];
 
           sessionVariables = {
             CLIMICROSOFT365_ENTRAAPPID = config.my.home.cli-microsoft365.entraAppId;
@@ -69,12 +82,22 @@
           };
         };
 
+        my.agentContext = "- Microsoft 365 (Teams, Outlook, files): `m365` is logged in as the user. Load the `m365` skill before using it.";
+
+        programs = {
+          claude-code.skills.m365 = ./SKILL.md;
+          github-copilot-cli.skills.m365 = ./SKILL.md;
+          opencode.skills.m365 = ./SKILL.md;
+        };
+
         xdg.configFile."configstore/cli-m365-config.json" = {
           force = true;
           text = builtins.toJSON {
-            prompt = true;
-            output = "json";
+            disableTelemetry = true;
             helpMode = "full";
+            output = "json";
+            prompt = false;
+            showHelpOnFailure = false;
           };
         };
       };

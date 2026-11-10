@@ -30,20 +30,12 @@
 
       conflictChecksRefreshScript =
         env:
-        mkRefreshScript "atlas-conflict-checks-refresh-${env}" "project-scout/conflict-checks" [
-          "uv run cck-refresh --work-dir outputs/${env}"
+        mkRefreshScript "atlas-conflict-checks-refresh-${env}" "atlas" [
+          "dotnet run --project src/Atlas.ConflictChecks.Refresh --configuration Release -- --environment ${env}"
         ];
 
-      elmRefreshScript = mkRefreshScript "atlas-elm-refresh" "project-scout/elm" (
-        [
-          "pwsh -NoProfile -NonInteractive -File scripts/Invoke-ElmRefresh.ps1"
-        ]
-        ++ publishToAllEnvironments "outputs/elm.duckdb" "elm.duckdb"
-      );
-
-      environments = [
-        "dev"
-        "prd"
+      elmRefreshScript = mkRefreshScript "atlas-elm-refresh" "atlas" [
+        "dotnet run --project src/Atlas.Elm.Refresh --configuration Release"
       ];
 
       failureNotify = pkgs.writeShellScript "atlas-refresh-failed" ''
@@ -119,16 +111,6 @@
         exec /mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -NonInteractive \
           -EncodedCommand "$(${pkgs.glibc.bin}/bin/iconv -f UTF-8 -t UTF-16LE ${toastScript} | ${pkgs.coreutils}/bin/base64 -w0)"
       '';
-
-      publishDuckDb = source: blobName: env: ''
-        uv run --native-tls --with azure-identity --with azure-storage-blob \
-          python ../_shared/publish_duckdb_blob.py \
-          --source ${source} \
-          --environment ${env} \
-          --container datasets \
-          --name ${blobName}'';
-
-      publishToAllEnvironments = source: blobName: map (publishDuckDb source blobName) environments;
 
       refreshOrder = [
         "atlas-map-refresh"
@@ -212,13 +194,11 @@
 
               atlas-conflict-checks-refresh-dev = mkService {
                 description = "Project Atlas: refresh conflict checks and publish (dev)";
-                environment.CCK_ENVIRONMENT = "dev";
                 script = conflictChecksRefreshScript "dev";
               };
 
               atlas-conflict-checks-refresh-prd = mkService {
                 description = "Project Atlas: refresh conflict checks and publish (prd)";
-                environment.CCK_ENVIRONMENT = "prd";
                 script = conflictChecksRefreshScript "prd";
               };
 
@@ -226,6 +206,8 @@
                 description = "Project Atlas: refresh ELM DuckDB and publish to dev and prd";
                 environment = {
                   ELM_AGILOFT_PASSWORD_FILE = config.sops.secrets.atlas-elm-password.path;
+                  ELM_AGILOFT_REST_PASSWORD_FILE = config.sops.secrets.atlas-elm-rest-password.path;
+                  ELM_AGILOFT_REST_USERNAME_FILE = config.sops.secrets.atlas-elm-rest-username.path;
                   ELM_AGILOFT_USERNAME_FILE = config.sops.secrets.atlas-elm-username.path;
                 };
                 script = elmRefreshScript;

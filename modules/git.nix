@@ -23,6 +23,9 @@
           git = lib.recursiveUpdate {
             enable = true;
             settings = {
+              core = {
+                fsmonitor = true;
+              };
               gpg = {
                 format = "ssh";
                 ssh = {
