@@ -337,7 +337,7 @@ in
                 in
                 {
                   imports = homeAspects ++ [
-                    inputs.nvf.homeManagerModules.default
+                    inputs.nvf.homeModules.default
                   ];
 
                   home = {

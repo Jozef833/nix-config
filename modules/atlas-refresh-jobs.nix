@@ -64,7 +64,11 @@
             ;;
           exit-code)
             why="Exited with status ''${MONITOR_EXIT_STATUS:-?}"
-            detail="$($grep -iE 'error|exception|failed' <<<"$log" | $grep -vE '^WARNING|<' | $tail -n1)"
+            detail="$($grep -iE 'error|exception|failed|stopped' <<<"$log" | $grep -vE '^WARNING|<' | $tail -n1)"
+            ;;
+          start-limit-hit)
+            why="Gave up retrying"
+            detail="$($grep -v '^[[:space:]]*$' <<<"$log" | $tail -n1)"
             ;;
           *) why="Result: ''${MONITOR_SERVICE_RESULT:-unknown}" ;;
         esac
@@ -202,16 +206,26 @@
                 script = conflictChecksRefreshScript "prd";
               };
 
-              atlas-elm-refresh = mkService {
-                description = "Project Atlas: refresh ELM DuckDB and publish to dev and prd";
-                environment = {
-                  ELM_AGILOFT_PASSWORD_FILE = config.sops.secrets.atlas-elm-password.path;
-                  ELM_AGILOFT_REST_PASSWORD_FILE = config.sops.secrets.atlas-elm-rest-password.path;
-                  ELM_AGILOFT_REST_USERNAME_FILE = config.sops.secrets.atlas-elm-rest-username.path;
-                  ELM_AGILOFT_USERNAME_FILE = config.sops.secrets.atlas-elm-username.path;
-                };
-                script = elmRefreshScript;
-              };
+              atlas-elm-refresh =
+                lib.recursiveUpdate
+                  (mkService {
+                    description = "Project Atlas: refresh ELM DuckDB and publish to dev and prd";
+                    environment = {
+                      ELM_AGILOFT_PASSWORD_FILE = config.sops.secrets.atlas-elm-password.path;
+                      ELM_AGILOFT_REST_PASSWORD_FILE = config.sops.secrets.atlas-elm-rest-password.path;
+                      ELM_AGILOFT_REST_USERNAME_FILE = config.sops.secrets.atlas-elm-rest-username.path;
+                      ELM_AGILOFT_USERNAME_FILE = config.sops.secrets.atlas-elm-username.path;
+                    };
+                    script = elmRefreshScript;
+                  })
+                  {
+                    serviceConfig = {
+                      RestartForceExitStatus = "75";
+                      RestartSec = "10min";
+                    };
+                    startLimitBurst = 110;
+                    startLimitIntervalSec = 20 * 60 * 60;
+                  };
 
               atlas-map-refresh = mkService {
                 description = "Project Atlas: refresh MAP DuckDB and publish to dev and prd";

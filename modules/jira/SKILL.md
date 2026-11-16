@@ -40,6 +40,10 @@ restish jira <operation> --rsh-generate-body     # example request body
 - `-o lines` prints bare scalars, which is useful for capturing an ID in a shell variable.
 - Send request bodies as JSON on stdin with a quoted heredoc (`<<'EOF'`). Never use interactive
   input.
+- **Every command needs explicit stdin.** When stdin isn't a terminal, restish reads it as the
+  request body, even for a GET. A command without a heredoc then waits forever on the inherited
+  stdin. Give it `</dev/null` instead, for example
+  `restish jira get-issue ABC-1 --fields summary -f body.fields </dev/null`.
 - For writes, `-f status` prints just the HTTP status.
 - HTTP errors exit non-zero, with Jira's `errorMessages` and `errors` in the body.
 - Flag values that start with `-` need `=`, for example `--order-by=-created`.
@@ -71,3 +75,4 @@ restish jira <operation> --rsh-generate-body     # example request body
 - `restish: command not found`, `401`, or `403`: tell the user. Don't configure auth or edit the
   restish config.
 - `400` with `errors`: the keys name the rejected fields. Re-check the metadata from step 2.
+- A command that hangs with no output is waiting on stdin. Rerun it with `</dev/null`.
