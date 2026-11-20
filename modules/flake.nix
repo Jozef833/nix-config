@@ -33,6 +33,7 @@
       };
       milliman-timesheet-cli = {
         url = "git+ssh://git@github.com/Milliman-CMHH/milliman-timesheet-cli.git";
+        flake = false;
       };
       nixos-wsl = {
         url = lib.mkDefault "github:nix-community/nixos-wsl";
