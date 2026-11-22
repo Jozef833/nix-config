@@ -1,6 +1,6 @@
 ---
 name: jira
-description: Reads and updates Jira Cloud issues through the preconfigured `restish jira` CLI - searching with JQL, viewing issues and comments, creating and editing issues, commenting, transitioning status, and assigning. Use whenever the user mentions Jira, a ticket or issue key such as ABC-123, JQL, or asks to look up, file, update, comment on, move, close, or assign a ticket, even if they do not say Jira or restish.
+description: Reads and updates Jira Cloud issues through the preconfigured `restish jira` CLI - searching with JQL, viewing issues and comments, creating and editing issues, commenting, transitioning status, and assigning. Use whenever the user mentions Jira, a ticket or issue key such as ABC-123, JQL, or asks to look up, file, update, comment on, move, close, assign, or QA a ticket, even if they do not say Jira or restish.
 compatibility: Requires the restish CLI with an API named "jira" already configured.
 ---
 
@@ -57,6 +57,85 @@ restish jira <operation> --rsh-generate-body     # example request body
 3. Show the exact command and payload, and confirm with the user.
 4. Execute.
 5. Re-read the issue to verify, then report the result.
+
+## Writing tickets
+
+- **Stories follow INVEST:** Independent, Negotiable, Valuable, Estimable, Small, Testable. A
+  story that meets these can be planned, prioritized, and verified on its own. If a request is too
+  large or depends on unfinished work, propose a split before creating it.
+- **The description is minimal.** It states who needs what and why in one to three sentences.
+  For stories, use "As a <role>, I want <capability>, so that <benefit>." A reader should
+  understand the ticket after one read. Leave out implementation details and acceptance criteria.
+- **Acceptance criteria (AC) go in the Acceptance Criteria field, never in the description.** Two
+  custom fields share that name (`customfield_10062` and `customfield_10112`), and each project
+  uses one. Use whichever appears in the project's create or edit metadata. The value is ADF.
+- **AC are a numbered list** (ADF `orderedList`) of Gherkin-style criteria. Each item is one
+  paragraph with the keywords **Given**, **When**, and **Then** in bold, each starting its own line
+  (separated by `hardBreak`). Use **And** for an extra clause. Gherkin forces each criterion to name
+  the starting state, trigger, and expected outcome, so it is unambiguous and maps directly to a
+  test. Describe observable behavior, not implementation. Write only the criteria that define done,
+  not every edge case.
+
+  ```
+  1. **Given** <context>
+     **When** <action>
+     **Then** <observable result>
+  ```
+
+  One item in ADF:
+  `{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Given","marks":[{"type":"strong"}]},{"type":"text","text":" <context>"},{"type":"hardBreak"},{"type":"text","text":"When","marks":[{"type":"strong"}]},{"type":"text","text":" <action>"},{"type":"hardBreak"},{"type":"text","text":"Then","marks":[{"type":"strong"}]},{"type":"text","text":" <observable result>"}]}]}`
+- **Tone is simple, precise, and objective.** Short declarative sentences. No filler, hedging,
+  adjectives, or emoji. Boring and clear.
+
+## QA testing
+
+QA results go in one comment on the ticket:
+
+```
+QA Check
+1. PASS|FAIL: <one-sentence reason>
+   <evidence>
+2. PASS|FAIL: ...
+```
+
+- Item N checks AC N, with the same count and order. Test each AC as written. The reason states
+  what was observed. Mark FAIL when the observation differs from the AC.
+- **Evidence is what makes the result credible.** The reason is a claim. Evidence lets a reader
+  check that claim without trusting the person who wrote it. Good evidence:
+  - shows the input and the output: the exact action taken (command, request, URL, clicks, data)
+    and what it produced. An output without the action that caused it proves nothing.
+  - is pinned to a point in time: when it was captured, and which version or environment was
+    tested. It records one state that cannot drift later.
+  - is raw: the actual output, not a paraphrase, and not trimmed in a way that changes its meaning.
+- **Use the medium that captures the evidence most faithfully, and combine media when one leaves
+  a gap.** Text-native results such as CLI or API output are best as a verbatim transcript in a
+  code block. Visual state is best as a screenshot that shows enough context to identify where
+  it was taken. Anything with a permanent address is best as a permalink to that exact version,
+  not to something that moves, like a branch or "latest".
+- If you can't capture the right evidence yourself, for example a page behind the user's
+  login, ask the user for it. Don't settle for weaker evidence.
+
+### Building the comment
+
+The comment is ADF: a "QA Check" paragraph, then an `orderedList`. Each `listItem` holds a
+paragraph with the `PASS:`/`FAIL:` line, followed by `codeBlock` and `mediaSingle` nodes for the
+evidence. When an item has several pieces of evidence, label each one.
+
+To embed a screenshot, attach it to the issue first, named like `abc1-ac1-<what>.png`. ADF media
+nodes need the media file id, which is not the attachment id. The attachment's download redirect
+contains the media file id.
+
+```bash
+# Upload. Prints the attachment id.
+restish jira add-attachment ABC-1 -c multipart -H 'X-Atlassian-Token: no-check' \
+  'file: @abc1-ac1-result.png' -f 'body[0].id' -o lines </dev/null
+# Resolve the media file id. The redirect URL also carries a token, so print only the id.
+restish jira get-attachment-content <attachment-id> -v </dev/null 2>&1 >/dev/null |
+  sed -n 's|^< Location: https://api.media.atlassian.com/file/\([^/]*\)/.*|\1|p'
+```
+
+Embed it as
+`{"type":"mediaSingle","content":[{"type":"media","attrs":{"type":"file","id":"<media-file-id>","collection":""}}]}`.
 
 ## Jira gotchas
 
